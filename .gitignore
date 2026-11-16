@@ -1,0 +1,10 @@
+R/datos/
+R/logs/
+.Rhistory
+.RData
+Rplots.pdf
+__pycache__/
+*.aux
+*.log
+*.out
+.~lock.*

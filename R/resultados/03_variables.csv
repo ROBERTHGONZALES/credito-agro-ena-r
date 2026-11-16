@@ -1,0 +1,36 @@
+puesto,variable,etiqueta,shap,seleccionada,motivo
+1,SUP_COSECHADA_HA,Superficie cosechada (ha),0.4618295358418771,1,seleccionada
+2,EDAD,Edad,0.2926585577904901,1,seleccionada
+3,DEPARTAMENTO,Departamento,0.25661045172161506,1,seleccionada
+4,TAM_HOGAR,Tamaño del hogar,0.21442712348301335,1,seleccionada
+5,USA_FERTILIZANTES,Usa fertilizantes,0.20095878253549954,1,seleccionada
+6,EDUCACION,Nivel educativo,0.1567356347744442,1,seleccionada
+7,USA_PLAGUICIDAS,Usa plaguicidas,0.1359815689241304,1,seleccionada
+8,REGION,Región natural,0.1212400099252655,1,seleccionada
+9,SUP_TOTAL_HA,Superficie total (ha),0.10211906299518571,1,seleccionada
+10,VENDE_LIMA_REGIONAL,Vende a mercados regionales/Lima,0.1020767189817443,1,seleccionada
+11,PCT_CULTIVOS_RIEGO,% cultivos con riego,0.09934947611463431,1,seleccionada
+12,PCT_CULTIVOS_VENDIDOS,% cultivos vendidos,0.0941580406168422,1,seleccionada
+13,ASOCIADO,Asociado,0.08421926439708076,1,seleccionada
+14,ARRIENDA_TIERRA,Arrienda tierra,0.08188077825171916,1,seleccionada
+15,CAPACITACION,Recibió capacitación,0.07410360284477895,0,fuera de las 14 primeras
+16,EXPERIENCIA,Años de experiencia,0.06925836747457953,0,redundante con EDAD
+17,PAGA_AGUA_RIEGO,Paga agua de riego,0.06297516645680637,0,redundante con PCT_CULTIVOS_RIEGO
+18,N_PARCELAS,Nº de parcelas,0.06172809033109806,0,fuera de las 14 primeras
+19,N_ESPECIES_PECUARIAS,Nº de especies pecuarias,0.054408924388832776,0,fuera de las 14 primeras
+20,USA_INFO_PRECIOS,Usa información de precios,0.04555543385263035,0,fuera de las 14 primeras
+21,LENGUA_NATIVA,Lengua materna nativa,0.04272335615837023,0,fuera de las 14 primeras
+22,ASISTENCIA_TECNICA,Asistencia técnica,0.0422319541873484,0,fuera de las 14 primeras
+23,N_CULTIVOS,Nº de cultivos,0.03790626071206202,0,fuera de las 14 primeras
+24,COMISION_REGANTES,Comisión de regantes,0.03707067873621669,0,redundante con PCT_CULTIVOS_RIEGO
+25,USA_ABONOS,Usa abonos,0.02617956686861019,0,fuera de las 14 primeras
+26,VENDE_AGROIND_EXTERIOR,Vende a agroindustria/exterior,0.01291320620905173,0,fuera de las 14 primeras
+27,VIVE_EN_PARCELA,Vive en la parcela,0.01214196694339303,0,fuera de las 14 primeras
+28,SEXO_MUJER,Productora mujer,0.010732680567576454,0,fuera de las 14 primeras
+29,ANALISIS_SUELO,Análisis de suelo,0.009981952276896319,0,fuera de las 14 primeras
+30,RIEGO_TECNIFICADO,Riego tecnificado,0.009484085336831491,0,fuera de las 14 primeras
+31,TIENE_PECUARIO,Tiene ganado,0.00927192927242987,0,redundante con N_ESPECIES_PECUARIAS
+32,VENDE_CULTIVOS,Vende cultivos,0.005414056750800064,0,redundante con PCT_CULTIVOS_VENDIDOS
+33,MINERIA_CERCA,Minería cerca,0.003260481123485233,0,fuera de las 14 primeras
+34,PAGA_ASISTENCIA_TEC,Paga asistencia técnica,0.0028328514919997443,0,fuera de las 14 primeras
+35,CERTIFICACION,Certificación de calidad,0.0024756759624210366,0,fuera de las 14 primeras

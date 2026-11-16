@@ -1,0 +1,2 @@
+combinaciones,minutos,umbral,cv_auc_pr,cv_auc_pr_sd,cv_auc_roc,cv_auc_roc_sd,train_auc_pr,train_auc_roc,nrounds,eta,max_depth,min_child_weight,subsample,colsample_bytree,gamma,lambda,alpha
+40,2,0.175,0.34875484480940955,0.025016131843785133,0.7901091250064269,0.008086514787720983,0.41118934751177905,0.8231504941235713,604,0.0235,6,4.8,0.62,0.57,4.08,0.16,0.22

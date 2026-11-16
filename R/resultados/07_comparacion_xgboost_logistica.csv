@@ -1,0 +1,13 @@
+metrica,xgboost,logistica,diferencia
+AUC-ROC,0.7979,0.791,0.0069
+AUC-PR,0.3671,0.3594,0.0077
+Balanced accuracy,0.7009,0.6878,0.0131
+F1 (con crédito),0.3965,0.3997,-0.0032
+Precisión,0.2991,0.3231,-0.024
+Recall,0.588,0.524,0.064
+Especificidad,0.8137,0.8516,-0.0379
+MCC,0.3073,0.3082,-9e-4
+Kappa,0.2834,0.296,-0.0126
+Accuracy,0.7868,0.8126,-0.0258
+Brier,0.0893,0.0902,-9e-4
+Log-loss,0.2998,0.3035,-0.0037
