@@ -136,6 +136,8 @@ c.append(B("The study has three limitations. The scenarios are estimates from a 
 c.append(H1("Conclusions"))
 c.append(B("A gradient boosting model with 14 survey variables ranks Peruvian agricultural producers by their likelihood of holding credit with an AUC-ROC of 0.798 and well-calibrated probabilities. One fifth of producers concentrates more than half of the credit, and 16.4 percent of producers form an unmet potential demand located mainly on the coast. Association membership is the action with the largest simulated effect, and the complementary actions vary by region. Future work should add the supply side, such as the distance to financial institutions, and evaluate the proposed actions with experimental or quasi-experimental designs."))
 
+c.append(P('Heading5', "Data and Code Availability"))
+c.append(B("The modeling sample of 49,837 producers, the R scripts, the result tables and the figures are available at github.com/ROBERTHGONZALES/credito-agro-ena-r. The repository reproduces every result in this paper from the cleaned sample. The original ENA microdata are published by the National Institute of Statistics and Informatics [[inei]]."))
 c.append(P('Heading5', "Acknowledgment"))
 c.append(B("The author thanks the National Institute of Statistics and Informatics of Peru for making the survey microdata publicly available. An artificial intelligence assistant (Claude, Anthropic) was used to support code development and the drafting of the manuscript; the author reviewed all content and is responsible for it."))
 c.append(P('Heading5', "References"))
