@@ -30,6 +30,8 @@ Las simulaciones describen asociación, no causalidad probada.
 | Ruta | Qué contiene |
 |---|---|
 | `data/etapas/09_muestra_modelo.parquet` | Muestra de modelado: 49 837 productores, 44 columnas |
+| `data/diccionario_variables.csv` | Diccionario: descripción, tipo y pregunta de la ENA de cada columna |
+| `R/pipeline_datos.qmd` / `.html` | Documento Quarto: cómo se construyó la muestra y descripción del conjunto de datos |
 | `R/00_…09_*.R` | Scripts del estudio, numerados en orden de ejecución |
 | `R/_comun.R` | Constantes y funciones compartidas (métricas, matriz de diseño, tema de gráficos) |
 | `R/resultados/` | Tablas (`.csv`) y figuras (`.png`) que produce cada script |
@@ -54,6 +56,7 @@ Rscript R/07_logistica_easystats.R  # regresión logística: odds ratios y diagn
 Rscript R/08_prescripcion.R         # focalización, demanda potencial y escenarios
 Rscript R/09_figuras_articulo.R     # figuras del artículo
 python3 R/articulo/construir_articulo.py   # arma el artículo en Word
+quarto render R/pipeline_datos.qmd        # documento del pipeline de datos (HTML)
 ```
 
 El proceso completo tarda unos 5 minutos en un equipo de escritorio. Los scripts usan la semilla 2026. Los objetos intermedios (`R/datos/*.rds`) no se incluyen porque el script 01 y los siguientes los vuelven a crear.

@@ -1,0 +1,42 @@
+variable,tipo,grupo,descripcion,fuente_ena,pct_faltante
+ANIO,id,diseño,Año de la encuesta,ANIO,0.0
+K_PROD,id,diseño,Llave del productor dentro del año,derivada,0.0
+GRUPO_CV,id,diseño,Conglomerado/segmento: grupo para validación cruzada agrupada,CONGLOMERADO / NSEGM,0.0
+FACTOR_EXP,peso,diseño,Factor de expansión del productor,FACTOR / FACTOR_PRODUCTOR,0.0
+DISENO,id,diseño,"Diseño muestral (conglomerados ≤2022, marco de áreas ≥2023)",derivada,0.0
+ACCESO_CREDITO,objetivo,objetivo,Solicitó y obtuvo crédito en los últimos 12 meses,"P901, P902",0.0
+EDAD,numérica,productor,Edad del productor (años),P1104_A (P1102 = productor),0.0
+SEXO_MUJER,binaria,productor,Productora mujer,P1103 (P1102 = productor),0.0
+EDUCACION,ordinal,productor,Nivel educativo 1=sin nivel … 10=superior univ. completa,P1105 (P1102 = productor),0.0
+LENGUA_NATIVA,binaria,productor,"Lengua materna quechua, aymara u otra nativa",P1106 (P1102 = productor),0.0
+EXPERIENCIA,numérica,productor,Años dedicado a la actividad agropecuaria,P101,0.0
+TAM_HOGAR,numérica,hogar,Nº de miembros del hogar del productor,cap. 1100 (conteo),0.0
+VIVE_EN_PARCELA,binaria,hogar,Vive en alguna de sus parcelas,P1110,0.6
+SUP_TOTAL_HA,numérica,tierra,Superficie total de sus parcelas (ha),P104_SUP_ha,0.6
+N_PARCELAS,numérica,tierra,Nº de parcelas trabajadas en el distrito (cambia de definición en 2023),P103,0.6
+SUP_COSECHADA_HA,numérica,tierra,Superficie cosechada total (ha),P217_SUP_ha (suma por cultivo),0.0
+N_CULTIVOS,numérica,tierra,Nº de cultivos cosechados,cap. 200AB (conteo),0.0
+ARRIENDA_TIERRA,binaria,tierra,Pagó arrendamiento de tierras,P1001A_1 > 0,4.3
+PCT_CULTIVOS_RIEGO,numérica,tecnología,% de cultivos con riego (no secano),P212 por cultivo,8.5
+RIEGO_TECNIFICADO,binaria,tecnología,"Algún cultivo con riego tecnificado (goteo, aspersión, etc.)",P213 en 1–6,0.0
+PAGA_AGUA_RIEGO,binaria,tecnología,Pagó por agua de riego,P1001A_3 > 0,4.3
+USA_ABONOS,binaria,tecnología,Usa abonos,P301A_13,1.8
+USA_FERTILIZANTES,binaria,tecnología,Usa fertilizantes,P301A_14,1.8
+USA_PLAGUICIDAS,binaria,tecnología,Usa plaguicidas,P301A_15,1.8
+ANALISIS_SUELO,binaria,tecnología,Realiza análisis de suelo,P301A_1,1.8
+VENDE_CULTIVOS,binaria,mercado,Vendió parte de su producción agrícola,P220_1_CANT_1 > 0,0.0
+PCT_CULTIVOS_VENDIDOS,numérica,mercado,% de cultivos de los que vendió algo,P220_1_CANT_1 por cultivo,0.0
+VENDE_AGROIND_EXTERIOR,binaria,mercado,Vendió a agroindustria o mercado exterior,"P223_3, P223_4",0.0
+VENDE_LIMA_REGIONAL,binaria,mercado,Vendió a mercados regionales o de Lima,"P223_2, P223_5",0.0
+CERTIFICACION,binaria,mercado,Productos con certificación de calidad,P608,0.0
+TIENE_PECUARIO,binaria,pecuario,Tuvo animales en los últimos 12 meses,P402A/P404A > 0 (cap. 400A_1),0.0
+N_ESPECIES_PECUARIAS,numérica,pecuario,"Nº de especies pecuarias que tuvo (vacunos, ovinos, cuyes, aves…)",P401A con P402A/P404A > 0,0.0
+ASOCIADO,binaria,servicios,"Pertenece a asociación, cooperativa o comité",P801,0.0
+COMISION_REGANTES,binaria,servicios,Usuario de comisión/junta de regantes,P810,2.6
+CAPACITACION,binaria,servicios,Recibió capacitación (últimos 3 años),P701,0.0
+ASISTENCIA_TECNICA,binaria,servicios,Recibió asistencia técnica (últimos 3 años),P704,0.0
+PAGA_ASISTENCIA_TEC,binaria,servicios,Pagó por asistencia técnica agrícola,P1001A_4 > 0,4.3
+USA_INFO_PRECIOS,binaria,servicios,Usó información de precios de venta,P707_1,0.0
+REGION,categórica,contexto,Región natural 1=Costa 2=Sierra 3=Selva,REGION,0.0
+DEPARTAMENTO,categórica,contexto,Código de departamento,CCDD,0.0
+MINERIA_CERCA,binaria,contexto,Minas en explotación cerca de sus cultivos/animales,P603,0.0

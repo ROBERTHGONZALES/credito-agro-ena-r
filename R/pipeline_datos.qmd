@@ -1,0 +1,440 @@
+---
+title: "Pipeline de datos: de la ENA a la muestra de modelado"
+subtitle: "Acceso a crédito de pequeños y medianos productores agropecuarios del Perú (ENA 2016–2025)"
+author: "Roberth Carlos Gonzales Mauricio"
+date: last-modified
+date-format: "D [de] MMMM [de] YYYY"
+lang: es
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    toc-title: "Contenido"
+    number-sections: true
+    code-fold: true
+    code-summary: "Ver código"
+    embed-resources: true
+    theme: cosmo
+    fig-width: 8
+    fig-height: 4.5
+    df-print: kable
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: preparar
+#| code-summary: "Ver código: librerías y lectura de datos"
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(nanoparquet)
+  library(knitr)
+})
+
+# Rutas relativas a esta carpeta (R/): los datos están en ../data
+d <- read_parquet("../data/etapas/09_muestra_modelo.parquet") |> as_tibble()
+dic <- read_csv("../data/diccionario_variables.csv", show_col_types = FALSE)
+sel <- read_csv("resultados/03_variables.csv", show_col_types = FALSE)
+
+DEPARTAMENTOS <- c("01" = "Amazonas", "02" = "Áncash", "03" = "Apurímac", "04" = "Arequipa", "05" = "Ayacucho",
+  "06" = "Cajamarca", "07" = "Callao", "08" = "Cusco", "09" = "Huancavelica", "10" = "Huánuco", "11" = "Ica",
+  "12" = "Junín", "13" = "La Libertad", "14" = "Lambayeque", "15" = "Lima", "16" = "Loreto", "17" = "Madre de Dios",
+  "18" = "Moquegua", "19" = "Pasco", "20" = "Piura", "21" = "Puno", "22" = "San Martín", "23" = "Tacna",
+  "24" = "Tumbes", "25" = "Ucayali")
+d <- d |> mutate(
+  REGION_TXT = factor(REGION, 1:3, c("Costa", "Sierra", "Selva")),
+  DEP_TXT = DEPARTAMENTOS[sprintf("%02d", as.integer(DEPARTAMENTO))]
+)
+
+AZUL <- "#0072B2"; NARANJA <- "#D55E00"; GRIS <- "#6B7280"
+COL_REGION <- c(Costa = "#D55E00", Sierra = "#004D40", Selva = "#56B4E9")
+tema <- theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), plot.title = element_text(face = "bold"),
+        plot.title.position = "plot", legend.position = "top")
+miles <- function(x) format(x, big.mark = ",", scientific = FALSE, trim = TRUE)
+pct <- function(x, k = 1) sprintf(paste0("%.", k, "f %%"), 100 * x)
+```
+
+## Resumen
+
+Este documento explica cómo se construyó, a partir de los microdatos de la Encuesta Nacional Agropecuaria (ENA) del INEI, el conjunto de datos con el que se entrena el modelo de acceso a crédito, y describe ese conjunto.
+
+| | |
+|---|---|
+| Registros originales procesados | 6,288,812 filas (2014–2025) |
+| Productores después de unir y filtrar | 217,535 |
+| Productores después de la limpieza | 196,566 (sin ningún dato faltante) |
+| **Muestra de modelado** | **`r miles(nrow(d))` productores, `r ncol(d) - 2` columnas** |
+| Con acceso a crédito | `r miles(sum(d$ACCESO_CREDITO))` (`r pct(mean(d$ACCESO_CREDITO))`) |
+| Entrenamiento / prueba | `r miles(sum(d$CONJUNTO == "entrenamiento"))` / `r miles(sum(d$CONJUNTO == "prueba"))` |
+
+La unidad de análisis es **un productor en un año de encuesta**. La variable objetivo, `ACCESO_CREDITO`, vale 1 si el productor solicitó y obtuvo un crédito en los últimos 12 meses, y 0 si no lo solicitó o se lo denegaron.
+
+## Fuente de datos
+
+La ENA es una encuesta anual del Instituto Nacional de Estadística e Informática (INEI) a productores agropecuarios. Sus microdatos son públicos en <https://proyectos.inei.gob.pe/microdatos/>. Se usaron dos entregas:
+
+- **ENA 2014–2024:** un archivo SPSS consolidado de 3,843,598 filas y 1,679 variables (14.7 GB).
+- **ENA 2025:** 21 módulos con 30 tablas CSV y 2,445,214 filas.
+
+En ambas entregas cada fila corresponde a un registro de un capítulo del cuestionario (un cultivo, una parcela, un miembro del hogar, una especie animal). Por eso un mismo productor aparece en muchas filas, y el primer trabajo del pipeline es llevarlo a una sola.
+
+### Años incluidos
+
+```{r}
+#| label: tbl-anios
+#| tbl-cap: "Años de la ENA y motivo de inclusión o exclusión"
+#| echo: false
+tribble(
+  ~Año, ~`En el modelo`, ~Motivo,
+  "2014, 2015", "No", "No registran superficie en hectáreas, años de experiencia ni número de parcelas",
+  "2016, 2017", "Sí", "Diseño por conglomerados",
+  "2018", "No", "Igual que 2014 y 2015: sin superficie en hectáreas",
+  "2019", "Sí", "Diseño por conglomerados",
+  "2020", "No", "La encuesta no se realizó (pandemia)",
+  "2021", "No", "No tiene el capítulo de crédito; trae en su lugar un módulo COVID",
+  "2022", "Sí", "Diseño por conglomerados",
+  "2023, 2024, 2025", "Sí", "Nuevo diseño: marco de áreas"
+)
+```
+
+## El pipeline paso a paso
+
+```{mermaid}
+%%| label: fig-pipeline
+%%| fig-cap: "Flujo de los datos desde los microdatos del INEI hasta la muestra de modelado"
+flowchart TD
+    A["ENA 2014–2024<br/>3,843,598 filas · 1,679 variables"] --> C
+    B["ENA 2025<br/>30 tablas · 2,445,214 filas"] --> C
+    C["1–2 · Conversión y carga<br/>6,288,812 filas apiladas"] --> D
+    D["3 · Una fila por productor y año<br/>341,211 × 1,026"] --> E
+    E["4 · Filtros, variable objetivo<br/>y 35 predictores<br/>217,535 productores"] --> F
+    F["5 · Limpieza con 8 reglas<br/>196,566 · sin faltantes"] --> G
+    G["6 · Muestra estratificada<br/>por año × región y conglomerado<br/>49,837 productores"] --> H
+    H["7 · Partición fija por conglomerado"] --> I["Entrenamiento<br/>39,868"]
+    H --> J["Prueba<br/>9,969"]
+```
+
+Los pasos 1 a 7 se ejecutaron una sola vez sobre los microdatos completos, que ocupan unos 50 GB y no caben en este repositorio. Sus conteos provienen del registro de procesamiento. Este repositorio parte del resultado del paso 7, el archivo `data/etapas/09_muestra_modelo.parquet`.
+
+### Pasos 1 y 2 · Conversión y carga
+
+- El archivo SPSS 2014–2024 se leyó por bloques de 200,000 filas y se guardó en formato Parquet, un archivo por año (283 MB en total). Los valores perdidos de SPSS se convirtieron en vacíos.
+- Las 30 tablas de 2025 se cargaron en una base de datos analítica y se apilaron. De sus 1,329 columnas, 1,324 tienen el mismo nombre que en 2014–2024, lo que permitió unir ambas entregas.
+- Se descartó una versión CSV de 2014–2024 de 35 GB porque estaba incompleta (solo tenía el 26 % de las filas).
+
+### Paso 3 · Una fila por productor y año
+
+- **Llave del productor:** en 2014–2022 es conglomerado + número de vivienda + unidad agropecuaria; desde 2023 es segmento + identificador del productor + unidad agropecuaria. Este cambio responde al cambio de diseño muestral del INEI en 2023.
+- **Variables de una sola respuesta** (edad, sexo, asociado…): se toma su valor único.
+- **Variables de varias filas** (cultivos, parcelas, animales): se resumen en conteos y porcentajes, como el número de cultivos o el porcentaje de cultivos con riego.
+- **Productores sin cuestionario principal:** se excluyeron 45,286 llaves. En 2021 había 41,700 registros sueltos de derivados agrícolas que no enlazaban con ningún productor.
+- **Resultado:** 341,211 productores-año con 1,026 variables.
+
+### Paso 4 · Población de estudio y variables
+
+```{r}
+#| label: tbl-filtros
+#| tbl-cap: "Filtros que definen la población de estudio"
+#| echo: false
+tribble(
+  ~Paso, ~Productores, ~Quitados, ~Motivo,
+  "Base productor-año 2014–2025", 341211, NA, "",
+  "Encuesta completa (RESFIN = 1)", 340804, 407, "Entrevistas incompletas",
+  "Años 2016, 2017, 2019, 2022–2025", 228310, 112494, "Ver la tabla de años",
+  "Respondió la pregunta de crédito", 224782, 3528, "Sin respuesta en P901",
+  "Pequeños y medianos (CODIGO = 1)", 217535, 7247, "Grandes productores y empresas: otra población"
+) |> mutate(across(c(Productores, Quitados), \(x) ifelse(is.na(x), "", miles(x))))
+```
+
+**Variable objetivo.** `ACCESO_CREDITO` = 1 si respondió "sí" a la pregunta P901 (solicitó crédito) y "sí" a la P902 (lo obtuvo).
+
+**Predictores.** Se construyeron 35 variables candidatas en ocho grupos: productor, hogar, tierra, tecnología y riego, mercado, pecuario, servicios y contexto. Las características personales (edad, sexo, educación, lengua) se toman del miembro del hogar registrado como productor.
+
+**Control de fuga de información.** Se excluyó todo el capítulo 900 (fuente, monto y uso del crédito), porque solo existe para quien ya obtuvo crédito y revelaría la respuesta al modelo.
+
+**Decisiones de construcción:**
+
+- La superficie se toma solo de las variables ya convertidas a hectáreas, porque las demás están en unidades locales (yugadas, topos).
+- Los montos en soles (arriendo, pago de agua, pago de asistencia técnica) se convirtieron a sí/no, porque la inflación del periodo los hace poco comparables.
+- `TIENE_PECUARIO` cuenta solo las especies con animales: el cuestionario registra una fila por especie aunque el productor no la tenga.
+
+### Paso 5 · Limpieza
+
+Las reglas se aplicaron en orden. No se imputó ningún valor: se descartaron los registros incoherentes o incompletos.
+
+```{r}
+#| label: tbl-limpieza
+#| tbl-cap: "Reglas de limpieza y registros eliminados"
+#| echo: false
+limpieza <- tribble(
+  ~Código, ~Regla, ~Eliminados, ~`Con crédito`, ~Quedan,
+  "—",  "Población de estudio", 0, 0, 217535,
+  "L1", "Edad menor de 18 o mayor de 100 años", 15, 0, 217520,
+  "L2", "Experiencia mayor que edad − 10", 1644, 145, 215876,
+  "L3", "Superficie total faltante", 1385, 89, 214491,
+  "L4", "Superficie total mayor de 500 ha", 273, 34, 214218,
+  "L5", "Superficie cosechada mayor que 3 × superficie total", 140, 35, 214078,
+  "L6", "Sin cultivos cosechados ni animales", 9685, 446, 204393,
+  "L7", "Tres o más predictores faltantes", 2980, 252, 201413,
+  "T1", "% de cultivos con riego = 0 si no tiene cultivos (corrección, no elimina)", 0, 0, 201413,
+  "L8", "Cualquier faltante restante", 4847, 341, 196566
+)
+prop_cred_elim <- sum(limpieza$`Con crédito`) / sum(limpieza$Eliminados)
+limpieza |> mutate(across(c(Eliminados, `Con crédito`, Quedan), miles))
+```
+
+Se eliminaron `r miles(217535 - 196566)` registros (9.6 %). La proporción de productores con crédito entre los eliminados (`r pct(prop_cred_elim)`) es parecida a la de la población (11.2 %), así que la limpieza no sesga la variable objetivo de forma notoria.
+
+### Paso 6 · Muestra estratificada
+
+Para trabajar con un tamaño manejable se tomó una muestra de unos 50,000 productores de la base limpia:
+
+- **Estratos:** año × región natural (21 estratos), con asignación proporcional a su tamaño.
+- **Unidad de muestreo:** el conglomerado completo. Así, los vecinos quedan siempre juntos y la validación agrupada sigue siendo válida.
+- **Peso:** `FACTOR_EXP_MUESTRA` = `FACTOR_EXP` × (productores expandidos del estrato limpio / productores expandidos de la muestra en el estrato). Con este peso, la muestra representa a la población.
+
+```{r}
+#| label: tbl-representatividad
+#| tbl-cap: "La muestra reproduce a la población limpia (valores ponderados)"
+#| echo: false
+tribble(
+  ~Indicador, ~`Población limpia (196,566)`, ~`Muestra (49,837)`,
+  "Acceso a crédito", "10.10 %", "10.13 %",
+  "Productores de la Sierra", "58.4 %", "58.5 %",
+  "Edad media (años)", "54.96", "54.92",
+  "Productoras mujeres", "26.7 %", "26.5 %",
+  "Asociados", "7.3 %", "7.2 %",
+  "Con asistencia técnica", "5.7 %", "5.5 %",
+  "Venden cultivos", "70.2 %", "70.3 %"
+)
+```
+
+### Paso 7 · Partición en entrenamiento y prueba
+
+La columna `CONJUNTO` fija qué productores son de entrenamiento (80 %) y cuáles de prueba (20 %). La partición se hizo por conglomerado y estratificada por la variable objetivo. Todo el análisis posterior (selección de variables, ajuste de hiperparámetros, umbral) usa solo el entrenamiento; la prueba se usa una vez, al final.
+
+## El conjunto de datos resultante
+
+### Estructura
+
+```{r}
+#| label: estructura
+roles <- dic |> select(variable, tipo, grupo, descripcion, fuente_ena) |>
+  bind_rows(tibble(variable = c("ESTRATO", "FACTOR_EXP_MUESTRA", "CONJUNTO"),
+                   tipo = c("id", "peso", "id"), grupo = "diseño",
+                   descripcion = c("Estrato de muestreo: año × región natural",
+                                   "Factor de expansión ajustado a la muestra",
+                                   "Partición fija: entrenamiento o prueba"),
+                   fuente_ena = "derivada"))
+stopifnot(setequal(roles$variable, names(d |> select(-REGION_TXT, -DEP_TXT))))
+conteo <- roles |> mutate(rol = case_when(grupo == "diseño" ~ "Diseño y pesos",
+                                          tipo == "objetivo" ~ "Variable objetivo",
+                                          TRUE ~ "Predictor candidato")) |> count(rol)
+```
+
+El archivo tiene **`r miles(nrow(d))` filas y `r ncol(d) - 2` columnas**: `r conteo$n[conteo$rol == "Predictor candidato"]` predictores candidatos, `r conteo$n[conteo$rol == "Variable objetivo"]` variable objetivo y `r conteo$n[conteo$rol == "Diseño y pesos"]` columnas de diseño muestral y pesos, que no entran al modelo.
+
+### Controles de calidad
+
+```{r}
+#| label: tbl-controles
+#| tbl-cap: "Controles de calidad sobre el archivo final"
+compartidos <- length(intersect(d$GRUPO_CV[d$CONJUNTO == "entrenamiento"],
+                                d$GRUPO_CV[d$CONJUNTO == "prueba"]))
+tibble(
+  Control = c("Valores faltantes en todo el archivo",
+              "Productores repetidos en un mismo año",
+              "Conglomerados presentes en entrenamiento y prueba a la vez",
+              "Variable objetivo solo con valores 0 y 1",
+              "Edad entre 18 y 100 años",
+              "Superficie total entre 0 y 500 ha"),
+  Resultado = c(miles(sum(is.na(d))),
+                miles(sum(duplicated(d[c("ANIO", "K_PROD")]))),
+                miles(compartidos),
+                ifelse(all(d$ACCESO_CREDITO %in% 0:1), "Sí", "No"),
+                ifelse(all(between(d$EDAD, 18, 100)), "Sí", "No"),
+                ifelse(all(between(d$SUP_TOTAL_HA, 0, 500)), "Sí", "No"))
+)
+```
+
+### Diccionario de variables
+
+```{r}
+#| label: tbl-diccionario
+#| tbl-cap: "Diccionario del conjunto de datos (fuente: preguntas del cuestionario ENA)"
+roles |>
+  mutate(`En el modelo final` = ifelse(variable %in% sel$variable[sel$seleccionada == 1], "Sí", "")) |>
+  select(Variable = variable, Grupo = grupo, Tipo = tipo, Descripción = descripcion,
+         `Fuente ENA` = fuente_ena, `En el modelo final`)
+```
+
+### Distribución por año y región
+
+```{r}
+#| label: fig-anio-region
+#| fig-cap: "Productores de la muestra por año y región natural"
+d |> count(ANIO, REGION_TXT) |>
+  ggplot(aes(factor(ANIO), n, fill = REGION_TXT)) +
+  geom_col(width = 0.7) +
+  scale_fill_manual(values = COL_REGION, name = NULL) +
+  scale_y_continuous(labels = miles, expand = expansion(mult = c(0, 0.05))) +
+  labs(x = NULL, y = "Productores") + tema
+```
+
+El tamaño de la muestra sube desde 2024 porque el INEI amplió la encuesta. Desde 2023 cambia el diseño muestral (de conglomerados a marco de áreas), lo que se registra en la columna `DISENO`.
+
+### Variable objetivo
+
+```{r}
+#| label: tbl-objetivo
+#| tbl-cap: "Acceso a crédito por año (sin ponderar y ponderado)"
+tasa <- function(g) d |> group_by({{ g }}) |>
+  summarise(Productores = n(), `Con crédito` = sum(ACCESO_CREDITO),
+            `% muestra` = mean(ACCESO_CREDITO),
+            `% ponderado` = weighted.mean(ACCESO_CREDITO, FACTOR_EXP_MUESTRA), .groups = "drop")
+total <- d |> summarise(Productores = n(), `Con crédito` = sum(ACCESO_CREDITO), `% muestra` = mean(ACCESO_CREDITO),
+                        `% ponderado` = weighted.mean(ACCESO_CREDITO, FACTOR_EXP_MUESTRA))
+bind_rows(tasa(ANIO) |> mutate(ANIO = as.character(ANIO)), total |> mutate(ANIO = "Total")) |>
+  mutate(across(c(Productores, `Con crédito`), miles), across(starts_with("%"), pct)) |>
+  rename(Año = ANIO)
+```
+
+Solo `r pct(mean(d$ACCESO_CREDITO))` de la muestra tiene crédito: hay unos `r round((1 - mean(d$ACCESO_CREDITO)) / mean(d$ACCESO_CREDITO), 1)` productores sin crédito por cada uno con crédito. Este desbalance explica por qué el modelo se evalúa con el área bajo la curva precisión-sensibilidad (AUC-PR) y no solo con la exactitud.
+
+```{r}
+#| label: fig-region
+#| fig-cap: "Acceso a crédito ponderado por región natural y por departamento"
+#| fig-height: 6.5
+p_reg <- tasa(REGION_TXT) |>
+  ggplot(aes(`% ponderado`, fct_rev(REGION_TXT), fill = REGION_TXT)) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  geom_text(aes(label = pct(`% ponderado`)), hjust = -0.15, size = 3.5) +
+  scale_fill_manual(values = COL_REGION) +
+  scale_x_continuous(labels = scales::percent, expand = expansion(mult = c(0, 0.35))) +
+  labs(x = NULL, y = NULL, title = "Región natural") + tema
+p_dep <- tasa(DEP_TXT) |>
+  ggplot(aes(`% ponderado`, fct_reorder(DEP_TXT, `% ponderado`))) +
+  geom_col(fill = AZUL, width = 0.7) +
+  scale_x_continuous(labels = scales::percent, expand = expansion(mult = c(0, 0.05))) +
+  labs(x = "Productores con crédito (ponderado)", y = NULL, title = "Departamento") + tema
+patchwork::wrap_plots(p_reg, p_dep, ncol = 2, widths = c(1, 1.2))
+```
+
+### Predictores numéricos
+
+```{r}
+#| label: tbl-numericas
+#| tbl-cap: "Descriptivos de los predictores numéricos y ordinales"
+num <- dic |> filter(tipo %in% c("numérica", "ordinal")) |> pull(variable)
+d |> select(all_of(num)) |>
+  pivot_longer(everything(), names_to = "Variable") |>
+  group_by(Variable) |>
+  summarise(Mínimo = min(value), P25 = quantile(value, 0.25), Mediana = median(value),
+            Media = mean(value), P75 = quantile(value, 0.75), Máximo = max(value)) |>
+  left_join(dic |> select(Variable = variable, Descripción = descripcion), by = "Variable") |>
+  relocate(Descripción, .after = Variable) |>
+  mutate(across(where(is.numeric), \(x) round(x, 2)))
+```
+
+La superficie tiene una distribución muy asimétrica: la mayoría de productores trabaja pocas hectáreas y unos pocos trabajan muchas. Los árboles de decisión del modelo no necesitan transformarla; la regresión logística usa su logaritmo.
+
+### Predictores binarios
+
+```{r}
+#| label: fig-binarias
+#| fig-cap: "Acceso a crédito según cada predictor binario (sin ponderar). La línea gris es la tasa general."
+#| fig-height: 7
+bin <- dic |> filter(tipo == "binaria") |> pull(variable)
+etiq <- setNames(dic$descripcion, dic$variable)
+tb <- d |> select(all_of(bin), ACCESO_CREDITO) |>
+  pivot_longer(-ACCESO_CREDITO, names_to = "variable", values_to = "valor") |>
+  group_by(variable) |>
+  summarise(prevalencia = mean(valor),
+            Sí = mean(ACCESO_CREDITO[valor == 1]), No = mean(ACCESO_CREDITO[valor == 0])) |>
+  mutate(etiqueta = sprintf("%s (%s)", str_trunc(etiq[variable], 45),
+                           ifelse(prevalencia < 0.01, "menos de 1 %", pct(prevalencia, 0))))
+tb |> pivot_longer(c(Sí, No), names_to = "grupo", values_to = "tasa") |>
+  ggplot(aes(tasa, fct_reorder(etiqueta, tasa, max), colour = grupo)) +
+  geom_vline(xintercept = mean(d$ACCESO_CREDITO), colour = GRIS, linetype = 2) +
+  geom_line(aes(group = etiqueta), colour = "grey80", linewidth = 1.2) +
+  geom_point(size = 2.6) +
+  scale_colour_manual(values = c(Sí = AZUL, No = NARANJA), name = "Tiene la característica:") +
+  scale_x_continuous(labels = scales::percent) +
+  labs(x = "Productores con crédito", y = NULL,
+       caption = "Entre paréntesis: % de productores que tiene la característica") + tema
+```
+
+Las mayores diferencias aparecen en características poco frecuentes, como pagar asistencia técnica, tener certificación de calidad o hacer análisis de suelo, y en la pertenencia a una asociación, que tiene el 7 % de los productores. Son diferencias brutas: cada una mezcla el efecto de otras variables, como el tamaño de la finca. El modelo y SHAP separan esos efectos.
+
+### Correlación entre predictores
+
+```{r}
+#| label: fig-correlacion
+#| fig-cap: "Pares de predictores con correlación de Spearman de 0.5 o más (en valor absoluto)"
+#| fig-height: 4
+pred <- dic |> filter(!grupo %in% c("diseño", "objetivo"), tipo != "categórica") |> pull(variable)
+cm <- cor(d[pred], method = "spearman")
+pares <- as_tibble(as.table(cm), .name_repair = "minimal") |>
+  setNames(c("a", "b", "rho")) |>
+  filter(as.character(a) < as.character(b), abs(rho) >= 0.5) |>
+  arrange(desc(abs(rho))) |>
+  mutate(par = paste(a, "·", b), redundante = abs(rho) >= 0.7)
+ggplot(pares, aes(rho, fct_reorder(par, abs(rho)), fill = redundante)) +
+  geom_col(width = 0.7) +
+  geom_vline(xintercept = 0.7, linetype = 2, colour = GRIS) +
+  scale_fill_manual(values = c(`TRUE` = NARANJA, `FALSE` = AZUL),
+                    labels = c(`TRUE` = "0.70 o más: redundante", `FALSE` = "Entre 0.5 y 0.7"), name = NULL) +
+  labs(x = "Correlación de Spearman", y = NULL) + tema
+```
+
+Los pares en naranja son redundantes. En la selección de variables, de cada uno se conservó el de mayor importancia SHAP.
+
+### Entrenamiento frente a prueba
+
+```{r}
+#| label: tbl-particion
+#| tbl-cap: "La partición mantiene la misma composición en entrenamiento y prueba"
+d |> group_by(Conjunto = CONJUNTO) |>
+  summarise(Productores = miles(n()), Conglomerados = miles(n_distinct(GRUPO_CV)),
+            `% con crédito` = pct(mean(ACCESO_CREDITO)),
+            `% Sierra` = pct(mean(REGION == 2)),
+            `Edad media` = round(mean(EDAD), 1),
+            `Sup. cosechada mediana (ha)` = round(median(SUP_COSECHADA_HA), 2),
+            `% asociados` = pct(mean(ASOCIADO)))
+```
+
+## De los 35 candidatos a las 14 variables del modelo
+
+La selección se hizo solo con el conjunto de entrenamiento, en tres pasos: importancia SHAP en validación cruzada agrupada, eliminación de redundantes (Spearman de 0.70 o más) y regla de un error estándar sobre la curva de AUC-PR según el número de variables.
+
+```{r}
+#| label: tbl-seleccion
+#| tbl-cap: "Resultado de la selección de variables (ordenadas por importancia SHAP)"
+sel |> mutate(Resultado = case_when(seleccionada == 1 ~ "Entra al modelo",
+                                    str_detect(motivo, "redund") ~ "Fuera: redundante",
+                                    TRUE ~ "Fuera: poca importancia")) |>
+  select(Puesto = puesto, Variable = variable, Descripción = etiqueta,
+         `Importancia SHAP` = shap, Resultado) |>
+  mutate(`Importancia SHAP` = round(`Importancia SHAP`, 3))
+```
+
+## Advertencias para usar estos datos
+
+- **Cambio de diseño en 2023.** Desde 2023 el INEI usa un marco de áreas en lugar de conglomerados. La superficie mediana casi se duplica (de unas 1.6 a 3.2 ha) y `N_PARCELAS` cambia de definición. Las comparaciones entre años deben tenerlo en cuenta.
+- **Montos convertidos a sí/no.** Arriendo, pago de agua y pago de asistencia técnica indican si el productor pagó algo, no cuánto.
+- **Sin imputación.** Los registros con datos faltantes se descartaron. La población limpia excluye, por ejemplo, a quienes no cosecharon ni tuvieron animales en el periodo.
+- **Asociación, no causalidad.** Los datos son de encuesta (observacionales). Las relaciones entre predictores y crédito describen asociación.
+- **Pesos.** Para estimar tasas de la población usa `FACTOR_EXP_MUESTRA`. El modelo se entrena sin pesos.
+
+## Cómo reproducir este documento
+
+Requiere R (con tidyverse, nanoparquet, knitr, rmarkdown y patchwork) y [Quarto](https://quarto.org). Desde la carpeta raíz del repositorio:
+
+```bash
+quarto render R/pipeline_datos.qmd
+```
+
+El resultado es `R/pipeline_datos.html`, un archivo único que se abre en cualquier navegador.
