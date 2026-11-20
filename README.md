@@ -86,10 +86,6 @@ Alcance de la reproducción: este repositorio reproduce el estudio desde la mues
 4. **Interpretación:** SHAP y, como contraste, regresión logística con easystats.
 5. **Prescripción:** curva de ganancia, demanda potencial por departamento y simulación de escenarios por región.
 
-## Uso de inteligencia artificial
-
-Se usó un asistente de inteligencia artificial (Claude, de Anthropic) como apoyo para desarrollar el código y redactar el manuscrito. El autor revisó todo el contenido y es responsable de él.
-
 ## Licencia
 
 El código se distribuye bajo licencia MIT (ver `LICENSE`). Los datos provienen del INEI; al usarlos, cita a la ENA como fuente.
