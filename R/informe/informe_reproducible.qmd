@@ -1,0 +1,202 @@
+---
+pagetitle: "Acceso al crédito agrario en el Perú"
+lang: es
+format:
+  pdf:
+    documentclass: article
+    classoption: [12pt]
+    geometry: [margin=1in]
+    pdf-engine: pdflatex
+    number-sections: true
+    fig-pos: H
+    fig-width: 6.2
+    fig-height: 2.9
+    include-in-header:
+      text: |
+        \usepackage{amsmath}
+        \usepackage{graphics}
+        \usepackage{fancyhdr}
+        \usepackage{graphicx}
+        \usepackage{cancel}
+        \usepackage{amsfonts}
+        \usepackage{amssymb}
+        \usepackage{float}
+        \setlength{\headheight}{15pt}
+        \pagestyle{fancy}
+        \fancyhead[LO,L]{DATA SCIENCE}
+        \fancyhead[CO,C]{FINESI}
+        \fancyhead[RO,R]{\today}
+        \fancyfoot[LO,L]{}
+        \fancyfoot[CO,C]{\thepage}
+        \fancyfoot[RO,R]{}
+        \renewcommand{\headrulewidth}{0.4pt}
+        \renewcommand{\footrulewidth}{0.4pt}
+    include-before-body:
+      text: |
+        \noindent \textbf{National University of the Altiplano\\
+        Faculty of Statistical Engineering and Computer Science\\
+        Theacher: } Fred Torres Cruz\\
+        \textbf{Authors :} Roberth Carlos GONZALES MAURICIO.\\
+        \phantom{\textbf{Authors :}} Cesia Belén GÓMEZ FLORES.\\
+  html:
+    number-sections: true
+    embed-resources: true
+    code-tools:
+      source: true
+      toggle: false
+      caption: "Ver código fuente"
+    theme: cosmo
+    fig-width: 8
+    fig-height: 3.8
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: preparar
+# Todo el informe se calcula aquí: datos de data/etapas y resultados de los scripts R/01–R/15 (carpeta R/resultados).
+suppressPackageStartupMessages({ library(tidyverse); library(nanoparquet); library(knitr) })
+RAIZ <- normalizePath(file.path("..", ".."))
+RES  <- file.path(RAIZ, "R", "resultados")
+r    <- function(f) read_csv(file.path(RES, f), show_col_types = FALSE)
+num  <- function(x, k = 1) formatC(x, format = "f", digits = k, big.mark = ",")
+pct  <- function(x, k = 1) paste0(num(x, k), " %")
+ent  <- function(x) format(round(x), big.mark = ",")
+tabla <- function(d, cap) {
+  al <- c("l", rep("r", ncol(d) - 1))
+  if (knitr::is_latex_output()) {
+    k <- kable(d, format = "latex", align = al, booktabs = TRUE, caption = cap, linesep = "")
+    knitr::asis_output(sub("\\begin{table}", "\\begin{table}[H]\\small", k, fixed = TRUE))
+  } else kable(d, align = al, caption = cap)
+}
+
+muestra <- read_parquet(file.path(RAIZ, "data", "etapas", "09_muestra_modelo.parquet"))
+limpio  <- read_parquet(file.path(RAIZ, "data", "etapas", "08_limpio.parquet"), col_select = c("ANIO", "ACCESO_CREDITO", "FACTOR_EXP"))
+
+modelo  <- r("04_modelo.csv");       met    <- r("05_metricas_prueba.csv")
+bench   <- r("13_benchmarks.csv");   icb    <- r("11_ic_bootstrap.csv")
+calib   <- r("11_calibracion.csv");  val    <- r("11_validacion_temporal_espacial.csv")
+completo <- r("13_datos_completos.csv"); efectos <- r("06_efectos_pp.csv")
+orr     <- r("13_odds_ratios_robustos.csv"); foco <- r("08_focalizacion.csv")
+sol     <- r("13_solicitud.csv");    sens   <- r("13_sensibilidad_umbral.csv")
+perfilg <- r("08_perfil_grupos.csv"); dep   <- r("13_departamentos_datos_completos.csv")
+pres    <- r("14_prestamistas_anio.csv"); crisis <- r("14_prestamistas_crisis_agrobanco.csv")
+preso   <- r("14_prestamistas_odds_ratios.csv"); presd <- r("14_prestamistas_departamento.csv")
+esc     <- r("11_escenarios_ic.csv"); escp  <- r("13_escenarios_ponderados.csv")
+asig    <- r("13_asignacion_cruzada.csv"); vars <- r("03_variables.csv")
+
+m     <- function(nombre, col = "xgboost") met[[col]][met$metrica == nombre]
+or    <- function(t) orr |> filter(termino == t)
+e_reg <- function(n, a) esc |> filter(escenario == n, ambito == a)
+p_w   <- function(n) escp |> filter(escenario == n)
+crz   <- function(K, regla) asig |> filter(K == !!K, regla == !!regla)
+cri   <- function(a) crisis |> filter(str_detect(grupo, "Agrobanco"), ANIO == a)
+vt    <- function(v) val |> filter(str_detect(validacion, v))
+
+n_muestra <- nrow(muestra); prev <- 100 * mean(muestra$ACCESO_CREDITO)
+prev_w    <- 100 * weighted.mean(limpio$ACCESO_CREDITO, limpio$FACTOR_EXP)
+solicito  <- sol$solicito[sol$conjunto == "muestra"]; aprobado <- sol$aprobado_si_solicito[sol$conjunto == "muestra"]
+top20     <- foco$captado_acum[foco$tramo == 2]
+brecha    <- perfilg |> filter(str_detect(grupo, "Potencial"))
+k_sel     <- sum(vars$seleccionada == 1)
+s175      <- sens |> filter(abs(umbral - modelo$umbral) < 1e-9)
+
+AZUL <- "#0072B2"; NARANJA <- "#D55E00"; GRIS <- "#6B7280"
+COL_R <- c(Costa = "#D55E00", Sierra = "#004D40", Selva = "#56B4E9")
+COL_T <- c("Público nacional" = "#0072B2", "Caja municipal" = "#E69F00", "Privado regulado" = "#D55E00", "Cooperativa u ONG" = "#009E73", "Informal" = "#999999")
+tema <- theme_minimal(base_size = 10) + theme(panel.grid.minor = element_blank(), legend.position = "bottom", plot.title.position = "plot",
+                                              plot.margin = margin(2, 4, 2, 2))
+```
+
+::: {.content-visible when-format="html"}
+**National University of the Altiplano**
+**Faculty of Statistical Engineering and Computer Science**
+**Theacher:** Fred Torres Cruz
+**Authors:** Roberth Carlos GONZALES MAURICIO.  
+Cesia Belén GÓMEZ FLORES.
+:::
+
+**Acceso al crédito agrario en el Perú: a quién priorizar y qué acciones impulsar (ENA 2016–2025)**
+
+# Objetivo
+
+Identificar qué pequeños y medianos productores agropecuarios tienen más probabilidad de acceder al crédito, dónde están los que tienen perfil de prestatario pero no lo piden y qué condiciones se asocian con un mayor acceso, para orientar a entidades financieras y programas públicos. Es un informe reproducible: todas las cifras se calculan en R al renderizarlo con Quarto, a partir de los datos y de los resultados de los scripts.
+
+# Datos y método
+
+**Datos.** `r ent(n_muestra)` productores de la Encuesta Nacional Agropecuaria (ENA) del INEI, rondas 2016, 2017, 2019 y 2022–2025, sorteados por conglomerados completos de `r ent(nrow(limpio))` productores depurados. La variable objetivo vale 1 si el productor solicitó crédito en los últimos 12 meses y lo obtuvo (preguntas P901 y P902); el `r pct(prev)` de la muestra lo tiene (`r pct(prev_w)` ponderado). Entrenamiento y prueba se separan por conglomerado, para que ningún vecindario quede en ambos lados.
+
+**Método.** De 35 variables candidatas se eligieron `r k_sel` con importancia SHAP en validación cruzada, eliminación de redundantes y la regla de un error estándar. El modelo es XGBoost con `caret`, ajustado con `r modelo$combinaciones` combinaciones de hiperparámetros y validación cruzada agrupada; se comparó con una regresión logística (`easystats`), una logística elastic net, un bosque aleatorio y un modelo aditivo. Con el modelo final se analizaron la focalización, la brecha de propensión, los prestamistas (pregunta P903) y escenarios hipotéticos.
+
+# Resultados
+
+## Qué tan confiable es el modelo
+
+```{r}
+#| label: modelos
+bench |> mutate(Modelo = recode(modelo, "Logística penalizada (elastic net)" = "Logística elastic net")) |>
+  transmute(Modelo, `AUC-ROC` = num(auc_roc, 3), `IC 95 %` = paste0(num(auc_roc_inf, 3), "–", num(auc_roc_sup, 3)),
+            `AUC-PR` = num(auc_pr, 3), Brier = num(brier, 3)) |>
+  tabla("Desempeño de cinco modelos en el conjunto de prueba (intervalo de confianza bootstrap del AUC-ROC)")
+```
+
+XGBoost alcanza un AUC-ROC de `r num(m("AUC-ROC"), 3)` y un AUC-PR de `r num(m("AUC-PR"), 3)`, tres veces la prevalencia (`r num(m("AUC-PR", "azar"), 3)`). Se mantiene al entrenar con 2016–2023 y probar en 2024–2025 (`r num(vt("Temporal")$auc_roc, 3)`) y con los `r ent(completo$n)` productores depurados (`r num(completo$auc_roc, 3)`). Está bien calibrado (pendiente `r num(calib$pendiente, 2)`; en el decil superior predice `r pct(calib$decil_sup_pred)` y ocurre `r pct(calib$decil_sup_obs)`). Los cinco modelos rinden casi igual: lo que limita la precisión es la información de la encuesta, no el algoritmo.
+
+## Qué se asocia con tener crédito
+
+
+Según el modelo, pertenecer a una asociación suma `r num(efectos$efecto_pp[efectos$variable == "ASOCIADO"])` puntos porcentuales a la probabilidad de tener crédito; pasar del primer al tercer cuartil de superficie cosechada, `r num(efectos$efecto_pp[efectos$variable == "SUP_COSECHADA_HA"])`; y usar fertilizantes, `r num(efectos$efecto_pp[efectos$variable == "USA_FERTILIZANTES"])`. La edad es el único factor que resta (`r num(efectos$efecto_pp[efectos$variable == "EDAD"])`). En la regresión logística, estar asociado multiplica por `r num(or("ASOCIADO")$or, 2)` las *odds* de tener crédito (intervalo robusto `r num(or("ASOCIADO")$inf_cl, 2)`–`r num(or("ASOCIADO")$sup_cl, 2)`) y usar fertilizantes por `r num(or("USA_FERTILIZANTES")$or, 2)`; cada década de edad las reduce a `r num(or("EDAD")$or, 2)`. Son asociaciones, no efectos causales.
+
+## A quién priorizar y dónde está la brecha
+
+Ordenando a los productores por su probabilidad, el 10 % superior reúne al `r pct(foco$captado_acum[1], 0)` de quienes tienen crédito y el 20 % superior al `r pct(top20, 0)`: `r num(foco$elevacion[1], 1)` veces más eficiente que elegir al azar.
+
+**El acceso depende de solicitar.** Solo el `r pct(solicito)` de los productores pidió crédito y al `r pct(aprobado)` de ellos se lo dieron. El `r pct(brecha$pct)` no tiene crédito aunque el modelo le da una probabilidad alta (la **brecha de propensión**), pero apenas el `r pct(s175$solicito_en_brecha)` de ese grupo solicitó. La barrera está antes de pedir crédito, no en la aprobación. La brecha es mayor donde el crédito ya es frecuente (correlación `r num(completo$spearman_tasa_vs_brecha, 2)`), así que señala dónde promover solicitudes es más fácil.
+
+```{r}
+#| label: fig-departamentos
+#| fig-cap: "Brecha de propensión (barras, con IC 95 %) y tasa de crédito (puntos) por departamento, con los 196,566 productores depurados"
+#| fig-height: 3.1
+dep |> mutate(DEPARTAMENTO = fct_reorder(DEPARTAMENTO, brecha)) |>
+  ggplot(aes(y = DEPARTAMENTO)) +
+  geom_col(aes(x = brecha), fill = AZUL, width = 0.7) + geom_errorbarh(aes(xmin = inf, xmax = sup), height = 0.3) +
+  geom_point(aes(x = tasa_credito), colour = NARANJA, size = 1.6) +
+  labs(x = "% de productores", y = NULL) + tema + theme(axis.text.y = element_text(size = 7))
+```
+
+## Quién presta
+
+```{r}
+#| label: fig-prestamistas
+#| fig-cap: "Prestatarios de cada tipo por cada 100 productores (ponderado)"
+#| fig-height: 2.4
+pres |> select(ANIO, starts_with("por100_")) |> pivot_longer(-ANIO) |>
+  mutate(tipo = factor(c(pub = "Público nacional", cmac = "Caja municipal", priv = "Privado regulado", coop = "Cooperativa u ONG", inf = "Informal")[sub("por100_", "", name)], names(COL_T))) |>
+  ggplot(aes(factor(ANIO), value, colour = tipo, group = tipo)) + geom_line(linewidth = 0.9) + geom_point(size = 1.4) +
+  scale_colour_manual(values = COL_T, name = NULL) + labs(x = NULL, y = "Por cada 100") + tema +
+  guides(colour = guide_legend(nrow = 2))
+```
+
+Los prestamistas privados regulados (bancos, cajas rurales y financieras) son la fuente principal. El crédito público (Agrobanco y programas del Estado) cayó de `r num(pres$por100_pub[pres$ANIO == 2017])` a `r num(pres$por100_pub[pres$ANIO == 2019])` prestatarios por cada 100 productores entre 2017 y 2019, durante la crisis de Agrobanco, y **nadie lo reemplazó**: en los productores con perfil de cliente de Agrobanco, el acceso cayó de `r pct(cri(2017)$acceso)` a `r pct(cri(2019)$acceso)` y el crédito de otros prestamistas no subió (`r pct(cri(2017)$otros)` y `r pct(cri(2019)$otros)`). El crédito público llega sobre todo a los asociados (*odds* `r num(preso$or[preso$termino == "ASOCIADO" & str_detect(preso$comparacion, "Público")], 2)` veces mayores que en el privado). En Lambayeque el `r pct(presd$part_inf[presd$DEPARTAMENTO == "Lambayeque"], 0)` de los prestatarios usa prestamistas informales, y en Apurímac el `r pct(presd$part_coop[presd$DEPARTAMENTO == "Apurímac"], 0)` usa cooperativas.
+
+## Qué acciones probar
+
+Si todos los no asociados se asociaran, la tasa nacional ponderada simulada pasaría de `r pct(p_w("Base")$ponderado)` a `r pct(p_w("Asociatividad")$ponderado)`. El riego (+`r num(e_reg("Riego en todos los cultivos", "Selva")$ganancia)` puntos) y los fertilizantes (+`r num(e_reg("Uso de fertilizantes", "Selva")$ganancia)`) solo suman de forma clara en la selva. Con presupuesto para asociar a 1,000 productores, elegir a los no asociados con mayor probabilidad logra `r round(crz(1000, "probabilidad")$cruzado)` nuevos accesos esperados frente a `r round(crz(1000, "azar")$cruzado)` al azar, evaluado con un modelo independiente. Son simulaciones del modelo: indican dónde probar, no cuánto crédito se crearía.
+
+# Líneas de acción
+
+1. **Focalizar con el modelo:** dirigir la colocación al 20 % de productores con mayor probabilidad, que reúne a más de la mitad de los prestatarios.
+2. **Bajar el costo de pedir crédito:** la brecha casi no solicita y la denegación es rara (`r pct(100 - aprobado, 0)`); probar información, trámites simples y productos a través de organizaciones, empezando por Tumbes, Lambayeque y Tacna.
+3. **Usar la asociatividad como canal,** con pilotos evaluables.
+4. **Dar estabilidad al crédito público:** cuando Agrobanco se retiró, sus clientes no fueron atendidos por otros.
+5. **En la selva, combinar crédito con riego e insumos.**
+
+# Limitaciones
+
+Los datos son observacionales: los escenarios describen asociaciones del modelo, no efectos causales. La precisión es `r num(m("Precisión"), 2)`, útil para priorizar grupos pero no casos individuales. La encuesta no informa por qué los productores no solicitan ni sobre la cercanía de las agencias financieras.
+
+# Reproducibilidad
+
+El análisis se hace íntegramente en R y se reproduce en Positron: abrir la carpeta del proyecto, ejecutar en orden los scripts `R/00_paquetes.R` a `R/15_exportar_csv.R` (unos 15 minutos) y renderizar este archivo con el botón **Preview** o con `quarto render R/informe/informe_reproducible.qmd`. Versiones: R `r paste(R.version$major, R.version$minor, sep = ".")`, xgboost `r packageVersion("xgboost")`, caret `r packageVersion("caret")`, easystats `r packageVersion("easystats")`, tidyverse `r packageVersion("tidyverse")`. Código y datos: [github.com/ROBERTHGONZALES/credito-agro-ena-r](https://github.com/ROBERTHGONZALES/credito-agro-ena-r).

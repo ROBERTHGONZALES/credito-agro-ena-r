@@ -5336,8 +5336,9 @@ z-index: 1000;
   <li><a href="#el-pipeline-paso-a-paso" id="toc-el-pipeline-paso-a-paso" class="nav-link" data-scroll-target="#el-pipeline-paso-a-paso"><span class="header-section-number">3</span> El pipeline paso a paso</a></li>
   <li><a href="#el-conjunto-de-datos-resultante" id="toc-el-conjunto-de-datos-resultante" class="nav-link" data-scroll-target="#el-conjunto-de-datos-resultante"><span class="header-section-number">4</span> El conjunto de datos resultante</a></li>
   <li><a href="#de-los-35-candidatos-a-las-14-variables-del-modelo" id="toc-de-los-35-candidatos-a-las-14-variables-del-modelo" class="nav-link" data-scroll-target="#de-los-35-candidatos-a-las-14-variables-del-modelo"><span class="header-section-number">5</span> De los 35 candidatos a las 14 variables del modelo</a></li>
-  <li><a href="#advertencias-para-usar-estos-datos" id="toc-advertencias-para-usar-estos-datos" class="nav-link" data-scroll-target="#advertencias-para-usar-estos-datos"><span class="header-section-number">6</span> Advertencias para usar estos datos</a></li>
-  <li><a href="#cómo-reproducir-este-documento" id="toc-cómo-reproducir-este-documento" class="nav-link" data-scroll-target="#cómo-reproducir-este-documento"><span class="header-section-number">7</span> Cómo reproducir este documento</a></li>
+  <li><a href="#el-conjunto-de-datos-que-entra-al-modelo" id="toc-el-conjunto-de-datos-que-entra-al-modelo" class="nav-link" data-scroll-target="#el-conjunto-de-datos-que-entra-al-modelo"><span class="header-section-number">6</span> El conjunto de datos que entra al modelo</a></li>
+  <li><a href="#advertencias-para-usar-estos-datos" id="toc-advertencias-para-usar-estos-datos" class="nav-link" data-scroll-target="#advertencias-para-usar-estos-datos"><span class="header-section-number">7</span> Advertencias para usar estos datos</a></li>
+  <li><a href="#cómo-reproducir-este-documento" id="toc-cómo-reproducir-este-documento" class="nav-link" data-scroll-target="#cómo-reproducir-este-documento"><span class="header-section-number">8</span> Cómo reproducir este documento</a></li>
   </ul>
 </nav>
 </div>
@@ -5363,7 +5364,7 @@ z-index: 1000;
     <div>
     <div class="quarto-title-meta-heading">Fecha de publicación</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">19 de noviembre de 2026</p>
+      <p class="date">20 de noviembre de 2026</p>
     </div>
   </div>
   
@@ -7111,8 +7112,505 @@ Tabla 10: Resultado de la selección de variables (ordenadas por importancia SH
 </div>
 </div>
 </section>
-<section id="advertencias-para-usar-estos-datos" class="level2" data-number="6">
-<h2 data-number="6" class="anchored" data-anchor-id="advertencias-para-usar-estos-datos"><span class="header-section-number">6</span> Advertencias para usar estos datos</h2>
+<section id="el-conjunto-de-datos-que-entra-al-modelo" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="el-conjunto-de-datos-que-entra-al-modelo"><span class="header-section-number">6</span> El conjunto de datos que entra al modelo</h2>
+<p>Esta sección describe el dataset final: lo que recibe XGBoost después de la selección de variables.</p>
+<section id="del-archivo-de-muestra-a-la-matriz-del-modelo" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="del-archivo-de-muestra-a-la-matriz-del-modelo"><span class="header-section-number">6.1</span> Del archivo de muestra a la matriz del modelo</h3>
+<div class="cell" data-layout-align="default">
+<details class="code-fold">
+<summary>Ver código</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>flowchart TD</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    A[&quot;Muestra de modelado&lt;br/&gt;49,837 × 44 columnas&quot;] --&gt; B[&quot;Se apartan 8 columnas de diseño y pesos&lt;br/&gt;y la variable objetivo&quot;]</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    B --&gt; C[&quot;35 predictores candidatos&quot;]</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    C --&gt; D[&quot;Selección con el entrenamiento&lt;br/&gt;SHAP · Spearman ≥ 0.70 · regla de 1 EE&quot;]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    D --&gt; E[&quot;14 variables&lt;br/&gt;12 numéricas o binarias + 2 categóricas&quot;]</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    E --&gt; F[&quot;Codificación 0/1 de las categóricas&lt;br/&gt;Región: 3 columnas · Departamento: 25&quot;]</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    F --&gt; G[&quot;Matriz de 40 columnas&quot;]</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    G --&gt; H[&quot;Entrenamiento&lt;br/&gt;39,868 × 40&quot;]</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    G --&gt; I[&quot;Prueba&lt;br/&gt;9,969 × 40&quot;]</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    H --&gt; J[&quot;XGBoost con caret&lt;br/&gt;CV de 5 grupos por conglomerado&quot;]</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    I --&gt; K[&quot;Evaluación final&lt;br/&gt;una sola vez&quot;]</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-matriz" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-matriz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+
+<pre class="mermaid mermaid-js" data-label="fig-matriz">flowchart TD
+    A[&quot;Muestra de modelado&lt;br/&gt;49,837 × 44 columnas&quot;] --&gt; B[&quot;Se apartan 8 columnas de diseño y pesos&lt;br/&gt;y la variable objetivo&quot;]
+    B --&gt; C[&quot;35 predictores candidatos&quot;]
+    C --&gt; D[&quot;Selección con el entrenamiento&lt;br/&gt;SHAP · Spearman ≥ 0.70 · regla de 1 EE&quot;]
+    D --&gt; E[&quot;14 variables&lt;br/&gt;12 numéricas o binarias + 2 categóricas&quot;]
+    E --&gt; F[&quot;Codificación 0/1 de las categóricas&lt;br/&gt;Región: 3 columnas · Departamento: 25&quot;]
+    F --&gt; G[&quot;Matriz de 40 columnas&quot;]
+    G --&gt; H[&quot;Entrenamiento&lt;br/&gt;39,868 × 40&quot;]
+    G --&gt; I[&quot;Prueba&lt;br/&gt;9,969 × 40&quot;]
+    H --&gt; J[&quot;XGBoost con caret&lt;br/&gt;CV de 5 grupos por conglomerado&quot;]
+    I --&gt; K[&quot;Evaluación final&lt;br/&gt;una sola vez&quot;]
+</pre>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-matriz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura 6: Cómo se arma la matriz del modelo a partir de la muestra
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Ver código</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>vars <span class="ot">&lt;-</span> sel<span class="sc">$</span>variable[sel<span class="sc">$</span>seleccionada <span class="sc">==</span> <span class="dv">1</span>]</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>dm <span class="ot">&lt;-</span> d <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">REGION =</span> REGION_TXT, <span class="at">DEPARTAMENTO =</span> <span class="fu">factor</span>(DEP_TXT))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Misma codificación que matriz() en R/_comun.R: cada categoría pasa a una columna 0/1</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>matriz <span class="ot">&lt;-</span> <span class="cf">function</span>(x, vars) {</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  partes <span class="ot">&lt;-</span> <span class="fu">lapply</span>(vars, <span class="cf">function</span>(v) {</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.factor</span>(x[[v]])) {</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>      m <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> z <span class="sc">-</span> <span class="dv">1</span>, <span class="fu">data.frame</span>(<span class="at">z =</span> x[[v]]))</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">colnames</span>(m) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(v, <span class="st">&quot;_&quot;</span>, <span class="fu">levels</span>(x[[v]])); m</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> <span class="fu">matrix</span>(<span class="fu">as.numeric</span>(x[[v]]), <span class="at">ncol =</span> <span class="dv">1</span>, <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>, v))</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(cbind, partes)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>tr <span class="ot">&lt;-</span> dm <span class="sc">|&gt;</span> <span class="fu">filter</span>(CONJUNTO <span class="sc">==</span> <span class="st">&quot;entrenamiento&quot;</span>)</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>te <span class="ot">&lt;-</span> dm <span class="sc">|&gt;</span> <span class="fu">filter</span>(CONJUNTO <span class="sc">==</span> <span class="st">&quot;prueba&quot;</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>X_tr <span class="ot">&lt;-</span> <span class="fu">matriz</span>(tr, vars); X_te <span class="ot">&lt;-</span> <span class="fu">matriz</span>(te, vars)</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">colnames</span>(X_tr), <span class="fu">colnames</span>(X_te)), <span class="sc">!</span><span class="fu">anyNA</span>(X_tr), <span class="sc">!</span><span class="fu">anyNA</span>(X_te))</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Ver código</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Conjunto =</span> <span class="fu">c</span>(<span class="st">&quot;Entrenamiento&quot;</span>, <span class="st">&quot;Prueba&quot;</span>),</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Filas =</span> <span class="fu">miles</span>(<span class="fu">c</span>(<span class="fu">nrow</span>(X_tr), <span class="fu">nrow</span>(X_te))),</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Columnas =</span> <span class="fu">c</span>(<span class="fu">ncol</span>(X_tr), <span class="fu">ncol</span>(X_te)),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Conglomerados =</span> <span class="fu">miles</span>(<span class="fu">c</span>(<span class="fu">n_distinct</span>(tr<span class="sc">$</span>GRUPO_CV), <span class="fu">n_distinct</span>(te<span class="sc">$</span>GRUPO_CV))),</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Con crédito</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">miles</span>(<span class="fu">c</span>(<span class="fu">sum</span>(tr<span class="sc">$</span>ACCESO_CREDITO), <span class="fu">sum</span>(te<span class="sc">$</span>ACCESO_CREDITO))),</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">% con crédito</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">pct</span>(<span class="fu">c</span>(<span class="fu">mean</span>(tr<span class="sc">$</span>ACCESO_CREDITO), <span class="fu">mean</span>(te<span class="sc">$</span>ACCESO_CREDITO))),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Uso =</span> <span class="fu">c</span>(<span class="st">&quot;Ajuste de hiperparámetros, umbral y selección&quot;</span>, <span class="st">&quot;Evaluación final&quot;</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div id="tbl-dimensiones" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-dimensiones-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla 11: Dimensiones del dataset que entra al modelo
+</figcaption>
+<div aria-describedby="tbl-dimensiones-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 6%">
+<col style="width: 7%">
+<col style="width: 12%">
+<col style="width: 10%">
+<col style="width: 12%">
+<col style="width: 39%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Conjunto</th>
+<th style="text-align: left;">Filas</th>
+<th style="text-align: right;">Columnas</th>
+<th style="text-align: left;">Conglomerados</th>
+<th style="text-align: left;">Con crédito</th>
+<th style="text-align: left;">% con crédito</th>
+<th style="text-align: left;">Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Entrenamiento</td>
+<td style="text-align: left;">39,868</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: left;">6,005</td>
+<td style="text-align: left;">4,750</td>
+<td style="text-align: left;">11.9 %</td>
+<td style="text-align: left;">Ajuste de hiperparámetros, umbral y selección</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Prueba</td>
+<td style="text-align: left;">9,969</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: left;">1,486</td>
+<td style="text-align: left;">1,187</td>
+<td style="text-align: left;">11.9 %</td>
+<td style="text-align: left;">Evaluación final</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p><strong>Qué no se hace a los datos antes del modelo:</strong></p>
+<ul>
+<li><strong>No se escalan ni se transforman</strong> las variables numéricas: los árboles de decisión solo usan el orden de los valores.</li>
+<li><strong>No se imputan valores:</strong> el archivo no tiene faltantes desde el paso 5.</li>
+<li><strong>No se balancean las clases</strong> (ni sobremuestreo ni pesos por clase). El desbalance se trata con la métrica (AUC-PR) y con el umbral de decisión (0.175, el que maximiza F1 en la validación cruzada).</li>
+<li><strong>No se usan los factores de expansión</strong> en el entrenamiento. Solo sirven para estimar tasas poblacionales.</li>
+</ul>
+</section>
+<section id="las-14-variables-del-modelo" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="las-14-variables-del-modelo"><span class="header-section-number">6.2</span> Las 14 variables del modelo</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Ver código</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>resumen_var <span class="ot">&lt;-</span> <span class="cf">function</span>(v) {</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> tr[[v]]; y <span class="ot">&lt;-</span> tr<span class="sc">$</span>ACCESO_CREDITO</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  tipo <span class="ot">&lt;-</span> dic<span class="sc">$</span>tipo[dic<span class="sc">$</span>variable <span class="sc">==</span> v]</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.factor</span>(x)) {</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    t <span class="ot">&lt;-</span> <span class="fu">tapply</span>(y, x, mean)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(<span class="at">Variable =</span> v, <span class="at">Tipo =</span> tipo,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>           <span class="at">Entra =</span> <span class="fu">sprintf</span>(<span class="st">&quot;%d columnas 0/1&quot;</span>, <span class="fu">nlevels</span>(x)),</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>           <span class="st">`</span><span class="at">Con crédito</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">&quot;Mayor tasa: %s (%s)&quot;</span>, <span class="fu">names</span>(<span class="fu">which.max</span>(t)), <span class="fu">pct</span>(<span class="fu">max</span>(t))),</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>           <span class="st">`</span><span class="at">Sin crédito</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">&quot;Menor tasa: %s (%s)&quot;</span>, <span class="fu">names</span>(<span class="fu">which.min</span>(t)), <span class="fu">pct</span>(<span class="fu">min</span>(t))))</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (tipo <span class="sc">==</span> <span class="st">&quot;binaria&quot;</span>) {</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(<span class="at">Variable =</span> v, <span class="at">Tipo =</span> tipo, <span class="at">Entra =</span> <span class="st">&quot;1 columna 0/1&quot;</span>,</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>           <span class="st">`</span><span class="at">Con crédito</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">pct</span>(<span class="fu">mean</span>(x[y <span class="sc">==</span> <span class="dv">1</span>])), <span class="st">`</span><span class="at">Sin crédito</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">pct</span>(<span class="fu">mean</span>(x[y <span class="sc">==</span> <span class="dv">0</span>])))</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    f <span class="ot">&lt;-</span> <span class="cf">if</span> (v <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;SUP_COSECHADA_HA&quot;</span>, <span class="st">&quot;SUP_TOTAL_HA&quot;</span>)) median <span class="cf">else</span> mean</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    nota <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">identical</span>(f, median)) <span class="st">&quot; (mediana)&quot;</span> <span class="cf">else</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(<span class="at">Variable =</span> v, <span class="at">Tipo =</span> tipo, <span class="at">Entra =</span> <span class="st">&quot;1 columna numérica&quot;</span>,</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>           <span class="st">`</span><span class="at">Con crédito</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">paste0</span>(<span class="fu">round</span>(<span class="fu">f</span>(x[y <span class="sc">==</span> <span class="dv">1</span>]), <span class="dv">2</span>), nota),</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>           <span class="st">`</span><span class="at">Sin crédito</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">paste0</span>(<span class="fu">round</span>(<span class="fu">f</span>(x[y <span class="sc">==</span> <span class="dv">0</span>]), <span class="dv">2</span>), nota))</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="fu">map_dfr</span>(vars, resumen_var) <span class="sc">|&gt;</span></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(sel <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="at">Variable =</span> variable, Descripción <span class="ot">=</span> etiqueta, <span class="at">Puesto =</span> puesto), <span class="at">by =</span> <span class="st">&quot;Variable&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Puesto, Variable, Descripción, Tipo, Entra, <span class="st">`</span><span class="at">Con crédito</span><span class="st">`</span>, <span class="st">`</span><span class="at">Sin crédito</span><span class="st">`</span>)</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div id="tbl-variables-modelo" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-variables-modelo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla 12: Variables del modelo en el entrenamiento: valor medio según acceso a crédito. En las binarias el valor es el % de productores con la característica; en las categóricas se muestra la categoría con mayor tasa de crédito.
+</figcaption>
+<div aria-describedby="tbl-variables-modelo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 14%">
+<col style="width: 22%">
+<col style="width: 7%">
+<col style="width: 12%">
+<col style="width: 19%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Puesto</th>
+<th style="text-align: left;">Variable</th>
+<th style="text-align: left;">Descripción</th>
+<th style="text-align: left;">Tipo</th>
+<th style="text-align: left;">Entra</th>
+<th style="text-align: left;">Con crédito</th>
+<th style="text-align: left;">Sin crédito</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">SUP_COSECHADA_HA</td>
+<td style="text-align: left;">Superficie cosechada (ha)</td>
+<td style="text-align: left;">numérica</td>
+<td style="text-align: left;">1 columna numérica</td>
+<td style="text-align: left;">2.3 (mediana)</td>
+<td style="text-align: left;">0.75 (mediana)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">EDAD</td>
+<td style="text-align: left;">Edad</td>
+<td style="text-align: left;">numérica</td>
+<td style="text-align: left;">1 columna numérica</td>
+<td style="text-align: left;">50.89</td>
+<td style="text-align: left;">55.57</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">DEPARTAMENTO</td>
+<td style="text-align: left;">Departamento</td>
+<td style="text-align: left;">categórica</td>
+<td style="text-align: left;">25 columnas 0/1</td>
+<td style="text-align: left;">Mayor tasa: Tumbes (27.1 %)</td>
+<td style="text-align: left;">Menor tasa: Callao (0.0 %)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">TAM_HOGAR</td>
+<td style="text-align: left;">Tamaño del hogar</td>
+<td style="text-align: left;">numérica</td>
+<td style="text-align: left;">1 columna numérica</td>
+<td style="text-align: left;">3.46</td>
+<td style="text-align: left;">3.05</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">USA_FERTILIZANTES</td>
+<td style="text-align: left;">Usa fertilizantes</td>
+<td style="text-align: left;">binaria</td>
+<td style="text-align: left;">1 columna 0/1</td>
+<td style="text-align: left;">76.3 %</td>
+<td style="text-align: left;">53.6 %</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">EDUCACION</td>
+<td style="text-align: left;">Nivel educativo</td>
+<td style="text-align: left;">ordinal</td>
+<td style="text-align: left;">1 columna numérica</td>
+<td style="text-align: left;">5.25</td>
+<td style="text-align: left;">4.42</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: left;">USA_PLAGUICIDAS</td>
+<td style="text-align: left;">Usa plaguicidas</td>
+<td style="text-align: left;">binaria</td>
+<td style="text-align: left;">1 columna 0/1</td>
+<td style="text-align: left;">78.9 %</td>
+<td style="text-align: left;">57.3 %</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: left;">REGION</td>
+<td style="text-align: left;">Región natural</td>
+<td style="text-align: left;">categórica</td>
+<td style="text-align: left;">3 columnas 0/1</td>
+<td style="text-align: left;">Mayor tasa: Costa (21.1 %)</td>
+<td style="text-align: left;">Menor tasa: Sierra (8.2 %)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: left;">SUP_TOTAL_HA</td>
+<td style="text-align: left;">Superficie total (ha)</td>
+<td style="text-align: left;">numérica</td>
+<td style="text-align: left;">1 columna numérica</td>
+<td style="text-align: left;">4.12 (mediana)</td>
+<td style="text-align: left;">2.16 (mediana)</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">VENDE_LIMA_REGIONAL</td>
+<td style="text-align: left;">Vende a mercados regionales/Lima</td>
+<td style="text-align: left;">binaria</td>
+<td style="text-align: left;">1 columna 0/1</td>
+<td style="text-align: left;">45.6 %</td>
+<td style="text-align: left;">25.0 %</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">11</td>
+<td style="text-align: left;">PCT_CULTIVOS_RIEGO</td>
+<td style="text-align: left;">% cultivos con riego</td>
+<td style="text-align: left;">numérica</td>
+<td style="text-align: left;">1 columna numérica</td>
+<td style="text-align: left;">0.6</td>
+<td style="text-align: left;">0.46</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">12</td>
+<td style="text-align: left;">PCT_CULTIVOS_VENDIDOS</td>
+<td style="text-align: left;">% cultivos vendidos</td>
+<td style="text-align: left;">numérica</td>
+<td style="text-align: left;">1 columna numérica</td>
+<td style="text-align: left;">0.62</td>
+<td style="text-align: left;">0.46</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">13</td>
+<td style="text-align: left;">ASOCIADO</td>
+<td style="text-align: left;">Asociado</td>
+<td style="text-align: left;">binaria</td>
+<td style="text-align: left;">1 columna 0/1</td>
+<td style="text-align: left;">15.4 %</td>
+<td style="text-align: left;">6.1 %</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">14</td>
+<td style="text-align: left;">ARRIENDA_TIERRA</td>
+<td style="text-align: left;">Arrienda tierra</td>
+<td style="text-align: left;">binaria</td>
+<td style="text-align: left;">1 columna 0/1</td>
+<td style="text-align: left;">27.6 %</td>
+<td style="text-align: left;">14.1 %</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Los productores con crédito cosechan más superficie, usan más fertilizantes y plaguicidas, venden más a mercados regionales o de Lima y están asociados con más frecuencia. Son comparaciones simples, sin controlar por las demás variables.</p>
+</section>
+<section id="vista-de-la-matriz" class="level3" data-number="6.3">
+<h3 data-number="6.3" class="anchored" data-anchor-id="vista-de-la-matriz"><span class="header-section-number">6.3</span> Vista de la matriz</h3>
+<p>Las primeras filas de la matriz de entrenamiento, tal como las recibe XGBoost (se muestran solo algunas de las 40 columnas):</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Ver código</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>cols <span class="ot">&lt;-</span> <span class="fu">c</span>(vars[<span class="sc">!</span>vars <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;REGION&quot;</span>, <span class="st">&quot;DEPARTAMENTO&quot;</span>)][<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>],</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>          <span class="fu">grep</span>(<span class="st">&quot;^REGION_&quot;</span>, <span class="fu">colnames</span>(X_tr), <span class="at">value =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>          <span class="fu">head</span>(<span class="fu">grep</span>(<span class="st">&quot;^DEPARTAMENTO_&quot;</span>, <span class="fu">colnames</span>(X_tr), <span class="at">value =</span> <span class="cn">TRUE</span>), <span class="dv">3</span>))</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(X_tr[<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>, cols]) <span class="sc">|&gt;</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ACCESO_CREDITO =</span> tr<span class="sc">$</span>ACCESO_CREDITO[<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>], <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">round</span>(x, <span class="dv">2</span>)))</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div id="tbl-vista-matriz" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-vista-matriz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla 13: Primeras 6 filas de la matriz de entrenamiento (columnas seleccionadas)
+</figcaption>
+<div aria-describedby="tbl-vista-matriz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 7%">
+<col style="width: 8%">
+<col style="width: 2%">
+<col style="width: 5%">
+<col style="width: 9%">
+<col style="width: 5%">
+<col style="width: 8%">
+<col style="width: 6%">
+<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">ACCESO_CREDITO</th>
+<th style="text-align: right;">SUP_COSECHADA_HA</th>
+<th style="text-align: right;">EDAD</th>
+<th style="text-align: right;">TAM_HOGAR</th>
+<th style="text-align: right;">USA_FERTILIZANTES</th>
+<th style="text-align: right;">EDUCACION</th>
+<th style="text-align: right;">USA_PLAGUICIDAS</th>
+<th style="text-align: right;">REGION_Costa</th>
+<th style="text-align: right;">REGION_Sierra</th>
+<th style="text-align: right;">REGION_Selva</th>
+<th style="text-align: right;">DEPARTAMENTO_Amazonas</th>
+<th style="text-align: right;">DEPARTAMENTO_Áncash</th>
+<th style="text-align: right;">DEPARTAMENTO_Apurímac</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.60</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.60</td>
+<td style="text-align: right;">45</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.12</td>
+<td style="text-align: right;">71</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.24</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">89</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.66</td>
+<td style="text-align: right;">80</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Columnas de la matriz (40): <code>SUP_COSECHADA_HA</code>, <code>EDAD</code>, <code>DEPARTAMENTO_Amazonas</code>, <code>DEPARTAMENTO_Áncash</code>, <code>DEPARTAMENTO_Apurímac</code>, <code>DEPARTAMENTO_Arequipa</code>, <code>DEPARTAMENTO_Ayacucho</code>, <code>DEPARTAMENTO_Cajamarca</code>, <code>DEPARTAMENTO_Callao</code>, <code>DEPARTAMENTO_Cusco</code>, <code>DEPARTAMENTO_Huancavelica</code>, <code>DEPARTAMENTO_Huánuco</code>, <code>DEPARTAMENTO_Ica</code>, <code>DEPARTAMENTO_Junín</code>, <code>DEPARTAMENTO_La Libertad</code>, <code>DEPARTAMENTO_Lambayeque</code>, <code>DEPARTAMENTO_Lima</code>, <code>DEPARTAMENTO_Loreto</code>, <code>DEPARTAMENTO_Madre de Dios</code>, <code>DEPARTAMENTO_Moquegua</code>, <code>DEPARTAMENTO_Pasco</code>, <code>DEPARTAMENTO_Piura</code>, <code>DEPARTAMENTO_Puno</code>, <code>DEPARTAMENTO_San Martín</code>, <code>DEPARTAMENTO_Tacna</code>, <code>DEPARTAMENTO_Tumbes</code>, <code>DEPARTAMENTO_Ucayali</code>, <code>TAM_HOGAR</code>, <code>USA_FERTILIZANTES</code>, <code>EDUCACION</code>, <code>USA_PLAGUICIDAS</code>, <code>REGION_Costa</code>, <code>REGION_Sierra</code>, <code>REGION_Selva</code>, <code>SUP_TOTAL_HA</code>, <code>VENDE_LIMA_REGIONAL</code>, <code>PCT_CULTIVOS_RIEGO</code>, <code>PCT_CULTIVOS_VENDIDOS</code>, <code>ASOCIADO</code>, <code>ARRIENDA_TIERRA</code>.</p>
+</section>
+</section>
+<section id="advertencias-para-usar-estos-datos" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="advertencias-para-usar-estos-datos"><span class="header-section-number">7</span> Advertencias para usar estos datos</h2>
 <ul>
 <li><strong>Cambio de diseño en 2023.</strong> Desde 2023 el INEI usa un marco de áreas en lugar de conglomerados. La superficie mediana casi se duplica (de unas 1.6 a 3.2 ha) y <code>N_PARCELAS</code> cambia de definición. Las comparaciones entre años deben tenerlo en cuenta.</li>
 <li><strong>Montos convertidos a sí/no.</strong> Arriendo, pago de agua y pago de asistencia técnica indican si el productor pagó algo, no cuánto.</li>
@@ -7121,10 +7619,10 @@ Tabla 10: Resultado de la selección de variables (ordenadas por importancia SH
 <li><strong>Pesos.</strong> Para estimar tasas de la población usa <code>FACTOR_EXP_MUESTRA</code>. El modelo se entrena sin pesos.</li>
 </ul>
 </section>
-<section id="cómo-reproducir-este-documento" class="level2" data-number="7">
-<h2 data-number="7" class="anchored" data-anchor-id="cómo-reproducir-este-documento"><span class="header-section-number">7</span> Cómo reproducir este documento</h2>
+<section id="cómo-reproducir-este-documento" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="cómo-reproducir-este-documento"><span class="header-section-number">8</span> Cómo reproducir este documento</h2>
 <p>Requiere R (con tidyverse, nanoparquet, knitr, rmarkdown y patchwork) y <a href="https://quarto.org">Quarto</a>. Desde la carpeta raíz del repositorio:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render R/pipeline_datos.qmd</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> render R/pipeline_datos.qmd</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
 <p>El resultado es <code>R/pipeline_datos.html</code>, un archivo único que se abre en cualquier navegador.</p>
 </section>
 

@@ -421,6 +421,125 @@ sel |> mutate(Resultado = case_when(seleccionada == 1 ~ "Entra al modelo",
   mutate(`Importancia SHAP` = round(`Importancia SHAP`, 3))
 ```
 
+## El conjunto de datos que entra al modelo
+
+Esta sección describe el dataset final: lo que recibe XGBoost después de la selección de variables.
+
+### Del archivo de muestra a la matriz del modelo
+
+```{mermaid}
+%%| label: fig-matriz
+%%| fig-cap: "Cómo se arma la matriz del modelo a partir de la muestra"
+flowchart TD
+    A["Muestra de modelado<br/>49,837 × 44 columnas"] --> B["Se apartan 8 columnas de diseño y pesos<br/>y la variable objetivo"]
+    B --> C["35 predictores candidatos"]
+    C --> D["Selección con el entrenamiento<br/>SHAP · Spearman ≥ 0.70 · regla de 1 EE"]
+    D --> E["14 variables<br/>12 numéricas o binarias + 2 categóricas"]
+    E --> F["Codificación 0/1 de las categóricas<br/>Región: 3 columnas · Departamento: 25"]
+    F --> G["Matriz de 40 columnas"]
+    G --> H["Entrenamiento<br/>39,868 × 40"]
+    G --> I["Prueba<br/>9,969 × 40"]
+    H --> J["XGBoost con caret<br/>CV de 5 grupos por conglomerado"]
+    I --> K["Evaluación final<br/>una sola vez"]
+```
+
+```{r}
+#| label: matriz-modelo
+vars <- sel$variable[sel$seleccionada == 1]
+dm <- d |> mutate(REGION = REGION_TXT, DEPARTAMENTO = factor(DEP_TXT))
+
+# Misma codificación que matriz() en R/_comun.R: cada categoría pasa a una columna 0/1
+matriz <- function(x, vars) {
+  partes <- lapply(vars, function(v) {
+    if (is.factor(x[[v]])) {
+      m <- model.matrix(~ z - 1, data.frame(z = x[[v]]))
+      colnames(m) <- paste0(v, "_", levels(x[[v]])); m
+    } else matrix(as.numeric(x[[v]]), ncol = 1, dimnames = list(NULL, v))
+  })
+  do.call(cbind, partes)
+}
+tr <- dm |> filter(CONJUNTO == "entrenamiento")
+te <- dm |> filter(CONJUNTO == "prueba")
+X_tr <- matriz(tr, vars); X_te <- matriz(te, vars)
+stopifnot(identical(colnames(X_tr), colnames(X_te)), !anyNA(X_tr), !anyNA(X_te))
+```
+
+```{r}
+#| label: tbl-dimensiones
+#| tbl-cap: "Dimensiones del dataset que entra al modelo"
+tibble(
+  Conjunto = c("Entrenamiento", "Prueba"),
+  Filas = miles(c(nrow(X_tr), nrow(X_te))),
+  Columnas = c(ncol(X_tr), ncol(X_te)),
+  Conglomerados = miles(c(n_distinct(tr$GRUPO_CV), n_distinct(te$GRUPO_CV))),
+  `Con crédito` = miles(c(sum(tr$ACCESO_CREDITO), sum(te$ACCESO_CREDITO))),
+  `% con crédito` = pct(c(mean(tr$ACCESO_CREDITO), mean(te$ACCESO_CREDITO))),
+  Uso = c("Ajuste de hiperparámetros, umbral y selección", "Evaluación final")
+)
+```
+
+**Qué no se hace a los datos antes del modelo:**
+
+- **No se escalan ni se transforman** las variables numéricas: los árboles de decisión solo usan el orden de los valores.
+- **No se imputan valores:** el archivo no tiene faltantes desde el paso 5.
+- **No se balancean las clases** (ni sobremuestreo ni pesos por clase). El desbalance se trata con la métrica (AUC-PR) y con el umbral de decisión (0.175, el que maximiza F1 en la validación cruzada).
+- **No se usan los factores de expansión** en el entrenamiento. Solo sirven para estimar tasas poblacionales.
+
+### Las 14 variables del modelo
+
+```{r}
+#| label: tbl-variables-modelo
+#| tbl-cap: "Variables del modelo en el entrenamiento: valor medio según acceso a crédito. En las binarias el valor es el % de productores con la característica; en las categóricas se muestra la categoría con mayor tasa de crédito."
+resumen_var <- function(v) {
+  x <- tr[[v]]; y <- tr$ACCESO_CREDITO
+  tipo <- dic$tipo[dic$variable == v]
+  if (is.factor(x)) {
+    t <- tapply(y, x, mean)
+    tibble(Variable = v, Tipo = tipo,
+           Entra = sprintf("%d columnas 0/1", nlevels(x)),
+           `Con crédito` = sprintf("Mayor tasa: %s (%s)", names(which.max(t)), pct(max(t))),
+           `Sin crédito` = sprintf("Menor tasa: %s (%s)", names(which.min(t)), pct(min(t))))
+  } else if (tipo == "binaria") {
+    tibble(Variable = v, Tipo = tipo, Entra = "1 columna 0/1",
+           `Con crédito` = pct(mean(x[y == 1])), `Sin crédito` = pct(mean(x[y == 0])))
+  } else {
+    f <- if (v %in% c("SUP_COSECHADA_HA", "SUP_TOTAL_HA")) median else mean
+    nota <- if (identical(f, median)) " (mediana)" else ""
+    tibble(Variable = v, Tipo = tipo, Entra = "1 columna numérica",
+           `Con crédito` = paste0(round(f(x[y == 1]), 2), nota),
+           `Sin crédito` = paste0(round(f(x[y == 0]), 2), nota))
+  }
+}
+map_dfr(vars, resumen_var) |>
+  left_join(sel |> select(Variable = variable, Descripción = etiqueta, Puesto = puesto), by = "Variable") |>
+  select(Puesto, Variable, Descripción, Tipo, Entra, `Con crédito`, `Sin crédito`)
+```
+
+Los productores con crédito cosechan más superficie, usan más fertilizantes y plaguicidas, venden más a mercados regionales o de Lima y están asociados con más frecuencia. Son comparaciones simples, sin controlar por las demás variables.
+
+### Vista de la matriz
+
+Las primeras filas de la matriz de entrenamiento, tal como las recibe XGBoost (se muestran solo algunas de las 40 columnas):
+
+```{r}
+#| label: tbl-vista-matriz
+#| tbl-cap: "Primeras 6 filas de la matriz de entrenamiento (columnas seleccionadas)"
+cols <- c(vars[!vars %in% c("REGION", "DEPARTAMENTO")][1:6],
+          grep("^REGION_", colnames(X_tr), value = TRUE),
+          head(grep("^DEPARTAMENTO_", colnames(X_tr), value = TRUE), 3))
+as_tibble(X_tr[1:6, cols]) |>
+  mutate(ACCESO_CREDITO = tr$ACCESO_CREDITO[1:6], .before = 1) |>
+  mutate(across(where(is.numeric), \(x) round(x, 2)))
+```
+
+```{r}
+#| label: columnas-matriz
+#| echo: false
+nombres <- colnames(X_tr)
+```
+
+Columnas de la matriz (`r length(nombres)`): `r paste0("<code>", nombres, "</code>", collapse = ", ")`.
+
 ## Advertencias para usar estos datos
 
 - **Cambio de diseño en 2023.** Desde 2023 el INEI usa un marco de áreas en lugar de conglomerados. La superficie mediana casi se duplica (de unas 1.6 a 3.2 ha) y `N_PARCELAS` cambia de definición. Las comparaciones entre años deben tenerlo en cuenta.

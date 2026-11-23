@@ -8,3 +8,5 @@ __pycache__/
 *.log
 *.out
 .~lock.*
+R/exportes/
+*.toc

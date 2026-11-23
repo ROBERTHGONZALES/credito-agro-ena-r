@@ -1,90 +1,88 @@
-# Acceso a crédito agrario en el Perú: análisis prescriptivo con XGBoost y SHAP en R
+# Acceso al crédito agrario en el Perú: focalización y análisis de escenarios con R
 
-Material de reproducción del estudio **"Prescriptive Analysis of Agricultural Credit Access in Peru Using Gradient Boosting and Explainable Machine Learning"**.
+Material de reproducción del estudio **"Agricultural Credit Access in Peru: Targeting and Scenario Analysis with Interpretable Machine Learning"**, hecho íntegramente en **R**, con informes en **Quarto** y pensado para trabajarse en **Positron**.
 
-Autor: Roberth Carlos Gonzales Mauricio, Facultad de Ingeniería Estadística e Informática, Universidad Nacional del Altiplano (Puno, Perú).
+Autores: Roberth Carlos Gonzales Mauricio y Cesia Belén Gómez Flores, Facultad de Ingeniería Estadística e Informática, Universidad Nacional del Altiplano (Puno, Perú).
 
-El estudio responde dos preguntas con la Encuesta Nacional Agropecuaria (ENA) 2016–2025:
+El estudio usa la Encuesta Nacional Agropecuaria (ENA) 2016–2025 del INEI para responder:
 
-1. ¿Qué productores pequeños y medianos tienen más probabilidad de obtener crédito?
-2. ¿Qué acciones subirían más esa probabilidad?
+1. ¿Qué pequeños y medianos productores tienen más probabilidad de solicitar y obtener crédito?
+2. ¿Dónde están los productores con perfil de prestatario que no piden crédito?
+3. ¿Quién presta (público, municipal, privado) y qué pasó cuando cayó Agrobanco?
+4. ¿Qué condiciones se asocian con un mayor acceso y a quién conviene intervenir con presupuesto limitado?
 
 ## Resultados principales
 
-Conjunto de prueba: 9 969 productores que el modelo no vio durante el entrenamiento.
-
-| Métrica | XGBoost | Regresión logística |
-|---|---|---|
-| AUC-ROC | 0.798 | 0.791 |
-| AUC-PR (azar = 0.119) | 0.367 | 0.359 |
-| MCC | 0.307 | 0.308 |
-
-- El 20 % de productores con mayor probabilidad concentra el 54 % de quienes tienen crédito.
-- El 16.4 % no tiene crédito aunque su perfil es igual al de quienes sí lo tienen (demanda potencial).
-- La asociatividad es la acción con mayor efecto: sube la tasa estimada de 12.3 % a 18.7 %. Las cuatro acciones juntas (asociación, mercado, riego y fertilizantes) la llevan a 25.1 %.
-
-Las simulaciones describen asociación, no causalidad probada.
+- **El modelo ordena bien a los productores.** En conglomerados no vistos, XGBoost logra un AUC-ROC de 0.798 (IC 95 %: 0.780–0.814), estable al probar en 2024–2025 (0.804) y con los 196,566 productores depurados (0.801). Un modelo aditivo, un bosque aleatorio y la regresión logística rinden casi igual (0.791–0.796).
+- **El acceso depende de solicitar.** El 13.0 % de los productores pidió crédito y al 91.9 % de ellos se lo dieron.
+- **Focalización.** El 20 % de productores con mayor probabilidad reúne al 54 % de quienes tienen crédito.
+- **Brecha de propensión.** El 16.4 % no tiene crédito aunque el modelo le da una probabilidad alta, pero solo el 1.9 % de ellos solicitó: la barrera está antes de pedir.
+- **Prestamistas.** Cuando el crédito público cayó en 2019 (crisis de Agrobanco), ningún otro prestamista lo reemplazó. El crédito público llega sobre todo a productores asociados.
+- **Escenarios.** Asociarse es la condición más ligada al crédito (tasa nacional ponderada simulada de 10.3 % a 16.4 %). Son simulaciones del modelo, no efectos causales.
 
 ## Contenido
 
 | Ruta | Qué contiene |
 |---|---|
-| `data/etapas/09_muestra_modelo.parquet` | Muestra de modelado: 49 837 productores, 44 columnas |
-| `data/diccionario_variables.csv` | Diccionario: descripción, tipo y pregunta de la ENA de cada columna |
-| `R/pipeline_datos.qmd` / `.html` | Documento Quarto: cómo se construyó la muestra y descripción del conjunto de datos |
-| `R/00_…09_*.R` | Scripts del estudio, numerados en orden de ejecución |
-| `R/_comun.R` | Constantes y funciones compartidas (métricas, matriz de diseño, tema de gráficos) |
+| `data/etapas/09_muestra_modelo.parquet` | Muestra de modelado: 49,837 productores, 44 columnas |
+| `data/etapas/08_limpio.parquet` | Los 196,566 productores depurados (comprobaciones con todos los datos) |
+| `data/etapas/10_credito_productor.parquet` | Preguntas de crédito de la ENA (solicitud, obtención, prestamista y uso) para esos productores |
+| `data/diccionario_variables.csv` | Diccionario de variables |
+| `R/00_…15_*.R` | Scripts del estudio, numerados en orden de ejecución |
+| `R/informe/informe_reproducible.qmd` | **Informe reproducible en Quarto** (HTML y PDF): todas las cifras se calculan al renderizarlo |
+| `R/informe/informe_credito_R.tex` | Informe del curso en LaTeX (4 páginas) |
+| `R/pipeline_datos.qmd` | Documento Quarto: cómo se construyó la muestra y descripción de los datos |
+| `R/dashboard/app.R` | Dashboard interactivo en Shiny (6 pestañas) |
+| `R/articulo/` | Artículo en formato IEEE, en inglés y en español, con el script que lo arma |
 | `R/resultados/` | Tablas (`.csv`) y figuras (`.png`) que produce cada script |
-| `R/informe/` | Informe en español (LaTeX y PDF, 4 páginas) |
-| `R/articulo/` | Artículo en inglés en formato IEEE (`.docx`), sus figuras y el script que lo arma |
 
-## Cómo reproducir
+## Cómo reproducir en Positron
 
-Requisitos: R 4.6 o superior. Para rearmar el artículo, también Python 3 (solo biblioteca estándar).
+Requisitos: R 4.6 o superior, Positron (trae Quarto incluido). Para rearmar el artículo en Word, también Python 3 (solo biblioteca estándar).
 
-Desde la carpeta raíz del repositorio:
+1. Clona el repositorio y ábrelo en Positron con **File → Open Folder**.
+2. En la terminal de Positron, desde la raíz del repositorio, corre los scripts en orden (unos 15 minutos):
 
 ```bash
 Rscript R/00_paquetes.R             # instala las librerías (solo la primera vez)
-Rscript R/01_cargar_datos.R         # lee el Parquet y prepara la muestra
+Rscript R/01_cargar_datos.R         # lee la muestra
 Rscript R/02_exploracion.R          # tasas, descriptivos y correlaciones
 Rscript R/03_seleccion_variables.R  # SHAP en validación cruzada, redundancia y regla de 1 error estándar
-Rscript R/04_modelo_xgboost.R       # XGBoost con caret: 40 combinaciones, validación cruzada agrupada
+Rscript R/04_modelo_xgboost.R       # XGBoost con caret, validación cruzada agrupada
 Rscript R/05_evaluacion.R           # métricas en la prueba, curvas y calibración
 Rscript R/06_interpretacion_shap.R  # importancia SHAP y efectos en puntos porcentuales
 Rscript R/07_logistica_easystats.R  # regresión logística: odds ratios y diagnósticos
-Rscript R/08_prescripcion.R         # focalización, demanda potencial y escenarios
-Rscript R/09_figuras_articulo.R     # figuras del artículo
-python3 R/articulo/construir_articulo.py   # arma el artículo en Word
-quarto render R/pipeline_datos.qmd        # documento del pipeline de datos (HTML)
+Rscript R/08_prescripcion.R         # focalización y escenarios
+Rscript R/09_figuras_articulo.R     # figuras del artículo (inglés)
+Rscript R/10_figuras_articulo_es.R  # figuras del artículo (español)
+Rscript R/11_validacion.R           # intervalos bootstrap, calibración, validación temporal y espacial
+Rscript R/12_departamentos.R        # resultados por departamento con intervalos
+Rscript R/13_revision.R             # otros modelos, brecha de propensión, ponderación, datos completos
+Rscript R/14_prestamistas.R         # prestamistas públicos, municipales y privados
+Rscript R/15_exportar_csv.R         # CSV por productor y datos del dashboard
 ```
 
-El proceso completo tarda unos 5 minutos en un equipo de escritorio. Los scripts usan la semilla 2026. Los objetos intermedios (`R/datos/*.rds`) no se incluyen porque el script 01 y los siguientes los vuelven a crear.
+3. Renderiza el informe con el botón **Preview** de Positron o con:
 
-Versiones usadas: R 4.6.1, xgboost 3.2.1.1, caret 7.0.1, shapviz 0.10.4, además de tidyverse, nanoparquet, easystats, pROC, PRROC y patchwork.
+```bash
+quarto render R/informe/informe_reproducible.qmd
+```
+
+4. Abre el dashboard con **Run App** sobre `R/dashboard/app.R` o con `Rscript -e "shiny::runApp('R/dashboard')"`.
+5. Opcional: `python3 R/articulo/construir_articulo.py` y `python3 R/articulo/construir_articulo_es.py` rearman el artículo.
+
+Los scripts usan la semilla 2026. Los objetos intermedios (`R/datos/*.rds`) y los CSV de `R/exportes/` no se incluyen porque los scripts los vuelven a crear. El script `R/01b_datos_credito.R` solo hace falta si se reconstruyen los datos desde los microdatos originales del INEI; su resultado ya viene en `data/etapas/`.
 
 ## Datos
 
-La fuente es la **Encuesta Nacional Agropecuaria (ENA)** del Instituto Nacional de Estadística e Informática del Perú (INEI), cuyos microdatos son públicos: <https://proyectos.inei.gob.pe/microdatos/>.
+La fuente es la **Encuesta Nacional Agropecuaria (ENA)** del Instituto Nacional de Estadística e Informática del Perú (INEI), cuyos microdatos son públicos: <https://proyectos.inei.gob.pe/microdatos/>. Los archivos incluidos son derivados ya depurados de esos microdatos:
 
-El archivo incluido es una muestra ya limpia, derivada de esos microdatos:
+- **Rondas:** 2016, 2017, 2019 y 2022 a 2025. Se excluyeron 2014, 2015 y 2018 (sin superficie en hectáreas), 2020 (no hubo encuesta) y 2021 (sin módulo de crédito).
+- **Población:** pequeños y medianos productores con entrevista completa; ocho reglas de consistencia, sin imputación.
+- **Variable objetivo:** `ACCESO_CREDITO` = 1 si solicitó (P901) y obtuvo (P902) crédito en los últimos 12 meses. 11.9 % en la muestra; 10.1 % ponderado.
+- **Diseño:** `GRUPO_CV` (conglomerado o segmento), factores de expansión `FACTOR_EXP` y `FACTOR_EXP_MUESTRA`, y partición fija por conglomerado (`CONJUNTO`: 39,868 entrenamiento, 9,969 prueba).
 
-- **Rondas:** 2016, 2017, 2019 y 2022 a 2025. Se excluyeron 2014, 2015 y 2018 (les faltan variables), 2020 (no hubo encuesta) y 2021 (sin módulo de crédito).
-- **Población:** productores agropecuarios pequeños y medianos.
-- **Variable objetivo:** `ACCESO_CREDITO` (1 = obtuvo crédito, 0 = no). El 11.9 % de la muestra tiene crédito.
-- **Predictores candidatos:** 35 (características del productor, tierra, riego, insumos, venta, organización y ubicación). Sus nombres legibles están en `R/_comun.R`.
-- **Columnas de diseño:** `ANIO`, `K_PROD` (clave anónima del productor), `GRUPO_CV` (conglomerado), `ESTRATO`, `FACTOR_EXP` y `FACTOR_EXP_MUESTRA` (pesos), `DISENO` y `CONJUNTO` (entrenamiento o prueba).
-- **Partición:** 39 868 productores para entrenamiento y 9 969 para prueba, separados por conglomerado para que ningún conglomerado aparezca en ambos lados.
-
-Alcance de la reproducción: este repositorio reproduce el estudio desde la muestra limpia en adelante. La construcción de esa muestra a partir de los microdatos originales no está incluida.
-
-## Método en breve
-
-1. **Selección de variables:** importancia SHAP en validación cruzada, eliminación de pares con correlación de Spearman de 0.70 o más y regla de un error estándar. Quedan 14 de 35 variables.
-2. **Modelo:** XGBoost ajustado por búsqueda aleatoria de 9 hiperparámetros, con validación cruzada de 5 grupos por conglomerado y AUC-PR como criterio. No se remuestrean las clases.
-3. **Evaluación:** el conjunto de prueba se usa una sola vez. Umbral de clasificación: 0.175 (máximo F1).
-4. **Interpretación:** SHAP y, como contraste, regresión logística con easystats.
-5. **Prescripción:** curva de ganancia, demanda potencial por departamento y simulación de escenarios por región.
+La construcción de estos archivos desde los microdatos originales se describe en `R/pipeline_datos.qmd`, pero no está incluida en este repositorio.
 
 ## Licencia
 
