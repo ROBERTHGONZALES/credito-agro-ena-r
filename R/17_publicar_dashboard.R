@@ -7,5 +7,7 @@ source(file.path(dirname(sub("--file=", "", grep("--file=", commandArgs(FALSE), 
 destino <- file.path(RAIZ, "docs")
 if (dir.exists(destino)) unlink(destino, recursive = TRUE)
 shinylive::export(appdir = file.path(BASE, "dashboard"), destdir = destino, title = "Crédito agrario en el Perú · ENA 2016–2025")
+idx <- file.path(destino, "index.html")             # título de la pestaña del navegador
+writeLines(sub("<title>[^<]*</title>", "<title>Crédito agrario en el Perú · ENA 2016–2025</title>", readLines(idx, encoding = "UTF-8")), idx, useBytes = TRUE)
 file.create(file.path(destino, ".nojekyll"))   # GitHub Pages no debe procesar los archivos con Jekyll
 cat("ok: dashboard exportado en", destino, "\n")

@@ -87,8 +87,9 @@ mapa <- function(var, sel = NULL, fuente = "mapa") {
 # ---- Interfaz -----------------------------------------------------------------------------------------
 ui <- page_navbar(
   title = "Crédito agrario en el Perú · ENA 2016–2025", theme = tema, fillable = FALSE, id = "nav",
-  header = tags$style(HTML(".bslib-value-box .value-box-value{font-size:1.7rem} .card-header{font-weight:600} .small{font-size:.85rem}
-                            .resumen li{margin-bottom:.35rem} .navbar-brand{font-weight:700}")),
+  header = tagList(plotly:::plotlyMainBundle(),   # carga plotly.js al inicio (evita gráficos en blanco en la versión web)
+                  tags$style(HTML(".bslib-value-box .value-box-value{font-size:1.7rem} .card-header{font-weight:600} .small{font-size:.85rem}
+                            .resumen li{margin-bottom:.35rem} .navbar-brand{font-weight:700}"))),
 
   nav_panel("Panorama", icon = bs_icon("speedometer2"),
     layout_column_wrap(width = 1/4, fill = FALSE,
