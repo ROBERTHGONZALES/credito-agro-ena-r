@@ -2,7 +2,7 @@
 paquetes <- c("tidyverse", "nanoparquet", "caret", "xgboost", "easystats", "shapviz", "pROC", "PRROC", "patchwork",
               "glmnet", "ranger", "mgcv", "sandwich",                 # comparación de modelos y errores robustos (13, 14)
               "knitr", "rmarkdown",                                    # informes Quarto
-              "shiny", "bslib", "bsicons", "plotly", "DT")              # dashboard
+              "shiny", "bslib", "bsicons", "plotly", "DT", "shinylive")   # dashboard y su versión web
 lib <- Sys.getenv("R_LIBS_USER")
 dir.create(lib, recursive = TRUE, showWarnings = FALSE)
 faltan <- setdiff(paquetes, rownames(installed.packages()))

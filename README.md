@@ -11,6 +11,10 @@ El estudio usa la Encuesta Nacional Agropecuaria (ENA) 2016–2025 del INEI para
 3. ¿Quién presta (público, municipal, privado) y qué pasó cuando cayó Agrobanco?
 4. ¿Qué condiciones se asocian con un mayor acceso y a quién conviene intervenir con presupuesto limitado?
 
+## Dashboard en línea
+
+**[roberthgonzales.github.io/credito-agro-ena-r](https://roberthgonzales.github.io/credito-agro-ena-r/)**: mapa del Perú, ficha de cada uno de los 24 departamentos (acceso, solicitud, brecha, prestamistas, perfil de productores y escenarios), comparación entre departamentos, simulador de focalización y datos descargables. Funciona en el navegador con Shinylive (la primera carga tarda unos segundos).
+
 ## Resultados principales
 
 - **El modelo ordena bien a los productores.** En conglomerados no vistos, XGBoost logra un AUC-ROC de 0.798 (IC 95 %: 0.780–0.814), estable al probar en 2024–2025 (0.804) y con los 196,566 productores depurados (0.801). Un modelo aditivo, un bosque aleatorio y la regresión logística rinden casi igual (0.791–0.796).
@@ -32,7 +36,9 @@ El estudio usa la Encuesta Nacional Agropecuaria (ENA) 2016–2025 del INEI para
 | `R/informe/informe_reproducible.qmd` | **Informe reproducible en Quarto** (HTML y PDF): todas las cifras se calculan al renderizarlo |
 | `R/informe/informe_credito_R.tex` | Informe del curso en LaTeX (4 páginas) |
 | `R/pipeline_datos.qmd` | Documento Quarto: cómo se construyó la muestra y descripción de los datos |
-| `R/dashboard/app.R` | Dashboard interactivo en Shiny (6 pestañas) |
+| `R/dashboard/app.R` | Dashboard interactivo en Shiny (10 pestañas) |
+| `docs/` | Versión web del dashboard (Shinylive) que publica GitHub Pages |
+| `data/departamentos_centroides.csv` | Punto central de cada departamento para el mapa |
 | `R/articulo/` | Artículo en formato IEEE, en inglés y en español, con el script que lo arma |
 | `R/resultados/` | Tablas (`.csv`) y figuras (`.png`) que produce cada script |
 
@@ -60,6 +66,8 @@ Rscript R/12_departamentos.R        # resultados por departamento con intervalos
 Rscript R/13_revision.R             # otros modelos, brecha de propensión, ponderación, datos completos
 Rscript R/14_prestamistas.R         # prestamistas públicos, municipales y privados
 Rscript R/15_exportar_csv.R         # CSV por productor y datos del dashboard
+Rscript R/16_dashboard_departamentos.R  # indicadores, escenarios y mapa por departamento
+Rscript R/17_publicar_dashboard.R   # exporta el dashboard a docs/ con Shinylive
 ```
 
 3. Renderiza el informe con el botón **Preview** de Positron o con:
