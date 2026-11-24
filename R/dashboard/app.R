@@ -312,8 +312,9 @@ server <- function(input, output, session) {
             textposition = "outside", cliponaxis = FALSE, hovertemplate = "%{y}: %{x:.1f} %<extra></extra>") |>
       lay(NULL, "Tasa simulada (%)", showlegend = FALSE,
           shapes = list(list(type = "line", x0 = base, x1 = base, yref = "paper", y0 = 0, y1 = 1, line = list(color = NARANJA, dash = "dash", width = 2))),
-          annotations = list(list(x = base, y = 1, yref = "paper", text = sprintf("Hoy: %.1f %%", base), showarrow = FALSE, xanchor = "left", yanchor = "top", xshift = 4,
-                                  font = list(color = NARANJA)))) |>
+          annotations = list(list(x = base, y = 1, yref = "paper", text = sprintf("<b>Hoy: %.1f %%</b>", base), showarrow = FALSE, xanchor = "center", yanchor = "bottom", yshift = 2,
+                                  font = list(color = "white", size = 13), bgcolor = NARANJA, borderpad = 4))) |>
+      layout(margin = list(t = 40)) |>
       layout(xaxis = list(range = c(0, max(e$simulada) * 1.18)))
   })
 
@@ -422,8 +423,9 @@ server <- function(input, output, session) {
             hovertemplate = "%{y}: %{x:.1f} %<extra></extra>") |>
       lay(NULL, "Tasa de acceso simulada (%)", showlegend = FALSE,
           shapes = list(list(type = "line", x0 = base, x1 = base, yref = "paper", y0 = 0, y1 = 1, line = list(color = NARANJA, dash = "dash", width = 2))),
-          annotations = list(list(x = base, y = 1, yref = "paper", text = sprintf("Hoy: %.1f %%", base), showarrow = FALSE, xanchor = "left", yanchor = "top", xshift = 4,
-                                  font = list(color = NARANJA))))
+          annotations = list(list(x = base, y = 1, yref = "paper", text = sprintf("<b>Hoy: %.1f %%</b>", base), showarrow = FALSE, xanchor = "center", yanchor = "bottom", yshift = 2,
+                                  font = list(color = "white", size = 13), bgcolor = NARANJA, borderpad = 4))) |>
+      layout(margin = list(t = 40))
   })
   output$t_asig <- renderDT({
     a <- asig |> mutate(regla = recode(regla, ganancia = "Por ganancia simulada", probabilidad = "Por mayor probabilidad", azar = "Al azar"),
