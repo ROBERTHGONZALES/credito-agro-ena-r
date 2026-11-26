@@ -81,7 +81,7 @@ nac_anio <- x |> group_by(ANIO) |>
   summarise(REGION = "Nacional", acceso = 100 * weighted.mean(obtuvo_credito, FACTOR_EXP), solicitud = 100 * weighted.mean(solicito_credito, FACTOR_EXP, na.rm = TRUE))
 write_csv(bind_rows(nac_anio, reg_anio), file.path(DSH, "acceso_anio.csv"))
 for (f in c("14_prestamistas_anio.csv", "14_prestamistas_perfil.csv", "14_prestamistas_crisis_agrobanco.csv", "13_departamentos_datos_completos.csv",
-            "13_benchmarks.csv", "11_escenarios_ic.csv", "13_escenarios_ponderados.csv", "13_asignacion_cruzada.csv", "08_focalizacion.csv",
+            "13_benchmarks.csv", "11_escenarios_ic.csv", "13_escenarios_ponderados.csv", "18_asignacion_k.csv", "08_focalizacion.csv",
             "06_importancia_shap.csv", "06_efectos_pp.csv", "13_sensibilidad_umbral.csv", "11_validacion_temporal_espacial.csv"))
   file.copy(file.path(RES, f), DSH, overwrite = TRUE)
 cat("ok:", nrow(salida), "productores;", length(list.files(DSH)), "archivos para el dashboard\n")

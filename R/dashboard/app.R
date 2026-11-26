@@ -21,7 +21,7 @@ crisis   <- leer("14_prestamistas_crisis_agrobanco.csv")
 bench    <- leer("13_benchmarks.csv")
 esc_ic   <- leer("11_escenarios_ic.csv")
 esc_pond <- leer("13_escenarios_ponderados.csv")
-asig     <- leer("13_asignacion_cruzada.csv")
+asig     <- leer("18_asignacion_k.csv")
 shap     <- leer("06_importancia_shap.csv")
 efectos  <- leer("06_efectos_pp.csv")
 valid    <- leer("11_validacion_temporal_espacial.csv")
@@ -179,7 +179,9 @@ ui <- page_navbar(
            plotlyOutput("g_escenarios", height = 360),
            nota(strong("Ojo: "), "son simulaciones del modelo, no efectos causales. Barras: intervalo bootstrap del 95 %.")),
       card(card_header("Programa con presupuesto: ¿a quién asociar?"), DTOutput("t_asig"),
-           nota("Nuevos accesos esperados (conjunto de prueba). Un modelo elige y otro independiente evalúa."), hr(), DTOutput("t_pond")))),
+           nota("Nuevos accesos esperados entre no asociados sin crédito (conjunto de prueba), con intervalo del 95 %. Un modelo elige y otro independiente evalúa; promedio de 5 particiones. ",
+                "Elegir por probabilidad rinde más, pero concentra el programa en la costa; elegir por ganancia llega más a la sierra y la selva. Son predicciones condicionales, no efectos causales."),
+           hr(), DTOutput("t_pond")))),
 
   nav_panel("El modelo", icon = bs_icon("cpu"),
     layout_columns(col_widths = c(6, 6),
@@ -428,8 +430,10 @@ server <- function(input, output, session) {
       layout(margin = list(t = 40))
   })
   output$t_asig <- renderDT({
-    a <- asig |> mutate(regla = recode(regla, ganancia = "Por ganancia simulada", probabilidad = "Por mayor probabilidad", azar = "Al azar"),
-                        v = sprintf("%.0f (%.0f–%.0f)", cruzado, inf, sup)) |> select(K, regla, v) |> pivot_wider(names_from = regla, values_from = v) |>
+    a <- asig |> mutate(regla = factor(recode(regla, ganancia = "Por ganancia simulada", probabilidad = "Por mayor probabilidad", azar = "Al azar"),
+                                       c("Por mayor probabilidad", "Por ganancia simulada", "Al azar")),
+                        v = sprintf("%.0f (%.0f–%.0f) · %.0f %% sierra/selva", cruzado, inf, sup, pct_sierra_selva)) |>
+      arrange(K, regla) |> select(K, regla, v) |> pivot_wider(names_from = regla, values_from = v) |>
       rename(`Productores atendidos` = K)
     tabla_dt(a)
   })

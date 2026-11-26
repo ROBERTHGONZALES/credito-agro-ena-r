@@ -96,3 +96,15 @@ cat("\n== Validación por ronda ==\n"); print(por_ronda, width = 200)
 cat("\n== Equidad regional ==\n"); print(equidad, width = 200)
 cat("\n== Asignación con costos (presupuesto", P, "unidades) ==\n"); print(asig_costo, width = 200)
 cat("\nCandidatos por región (%):\n"); print(round(cand_reg, 1))
+
+# Tabla para el dashboard: misma asignación (costo uniforme, presupuesto = productores atendidos) con 500, 1000 y 2000.
+asig_k <- map_dfr(c(500, 1000, 2000), function(K) {
+  uno <- escenarios_costo$uniforme; pt <- cruz(seq_len(nrow(te)), K, uno)
+  bs <- replicate(B, cruz(remuestra(), K, uno)$nuevos)
+  sr <- map_dbl(pt$region, ~ 100 * sum(.x[c("Sierra", "Selva")]) / sum(.x))
+  tibble(K = K, regla = names(pt$nuevos), cruzado = pt$nuevos, inf = apply(bs, 1, q)[1, ], sup = apply(bs, 1, q)[2, ],
+         pct_sierra_selva = c(sr[c("ganancia_costo", "ganancia", "probabilidad")], azar = sum(cand_reg[c("Sierra", "Selva")]))[names(pt$nuevos)]) |>
+    filter(regla != "ganancia_costo")
+})
+write_csv(asig_k, file.path(RES, "18_asignacion_k.csv"))
+cat("\n== Asignación por tamaño del programa (costo uniforme) ==\n"); print(asig_k, width = 200)
