@@ -26,4 +26,12 @@ for viejo, nuevo in [("'contenido_en.py'", "'contenido_final.py'"),
     assert src.count(viejo) == 1, viejo
     src = src.replace(viejo, nuevo)
 
+# Aviso de copyright que indica ICALTER 2026 ("PDF Instructions for Authors"): pie de la primera página.
+gancho = "dst=os.path.abspath(sys.argv[1])"
+assert src.count(gancho) == 1
+src = src.replace(gancho, '''_p = f'{OUT}/word/footer1.xml'; _t = open(_p, encoding='utf8').read()
+_a = 'XXX-X-XXXX-XXXX-X/XX/$XX.00 ©20XX IEEE'; assert _a in _t
+open(_p, 'w', encoding='utf8').write(_t.replace(_a, '979-8-3195-6750-5/26/$31.00 ©2026 IEEE'))
+''' + gancho)
+
 exec(compile(src, 'construir_articulo.py (final)', 'exec'))
