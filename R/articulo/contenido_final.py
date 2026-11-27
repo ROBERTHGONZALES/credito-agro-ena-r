@@ -44,7 +44,7 @@ NU = lambda c, k: round(float(AC[(c, k)]['nuevos']))
 CPN = lambda c, k: f1(AC[(c, k)]['costo_por_nuevo'])
 HR = lambda k, c='uniforme': f1(float(AC[(c, k)]['Sierra']) + float(AC[(c, k)]['Selva']), 0)
 
-TITLE = "Targeting Agricultural Credit Access in Peru with Gradient Boosting and Explainable Machine Learning"
+TITLE = "Prescriptive Analysis of Agricultural Credit Access in Peru Using Gradient Boosting and Explainable Machine Learning"
 c = []
 c.append('<w:p><w:pPr><w:pStyle w:val="Abstract"/><w:rPr><w:i/><w:iCs/></w:rPr></w:pPr><w:r><w:rPr><w:i/><w:iCs/></w:rPr><w:t>Abstract</w:t></w:r><w:r><w:t xml:space="preserve">—'
  + escape("Only about one in ten small and medium agricultural producers in Peru obtains credit. With 49,837 producers from seven rounds of the National Agricultural Survey (2016 to 2025), we model whether a producer applied for and obtained credit and use the model to decide whom a budget-limited program should reach. Fourteen of 35 candidate predictors were kept. On sampling clusters not used for training, XGBoost reached an area under the ROC curve of 0.798 (95% interval 0.780 to 0.814), "

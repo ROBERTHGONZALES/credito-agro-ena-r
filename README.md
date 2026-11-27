@@ -2,7 +2,7 @@
 
 Material de reproducción del estudio sobre acceso al crédito agrario en el Perú, hecho íntegramente en **R**, con informes en **Quarto** y pensado para trabajarse en **Positron**.
 
-El artículo **"Targeting Agricultural Credit Access in Peru with Gradient Boosting and Explainable Machine Learning"** fue aceptado para presentación oral en ICALTER 2026 (IEEE). La versión ampliada del estudio se titula "Agricultural Credit Access in Peru: Targeting and Scenario Analysis with Interpretable Machine Learning".
+El artículo **"Prescriptive Analysis of Agricultural Credit Access in Peru Using Gradient Boosting and Explainable Machine Learning"** fue aceptado para presentación oral en ICALTER 2026 (IEEE). La versión ampliada del estudio se titula "Agricultural Credit Access in Peru: Targeting and Scenario Analysis with Interpretable Machine Learning".
 
 Autores del estudio: Roberth Carlos Gonzales Mauricio y Cesia Belén Gómez Flores, Facultad de Ingeniería Estadística e Informática, Universidad Nacional del Altiplano (Puno, Perú).
 
